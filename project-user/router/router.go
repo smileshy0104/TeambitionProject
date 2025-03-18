@@ -20,10 +20,6 @@ func New() *RegisterRouter {
 }
 
 // Route 方法用于遍历所有已注册的路由并调用它们的 Route 方法
-// 参数:
-//
-//	ro - 实现了 Router 接口的路由对象
-//	r - gin 的 Engine 对象，用于定义路由
 func (*RegisterRouter) Route(ro Router, r *gin.Engine) {
 	ro.Route(r)
 }
@@ -32,9 +28,6 @@ func (*RegisterRouter) Route(ro Router, r *gin.Engine) {
 var routers []Router
 
 // InitRouter 方法用于初始化路由，将所有已注册的路由应用到 gin 的 Engine 对象上
-// 参数:
-//
-//	r - gin 的 Engine 对象，用于定义路由
 func InitRouter(r *gin.Engine) {
 	// 遍历所有已注册的路由并调用它们的 Route 方法
 	for _, ro := range routers {
@@ -43,9 +36,6 @@ func InitRouter(r *gin.Engine) {
 }
 
 // Register 方法用于向 routers 切片中注册一个或多个路由
-// 参数:
-//
-//	ro - 一个或多个实现了 Router 接口的路由对象
 func Register(ro ...Router) {
 	routers = append(routers, ro...)
 }
