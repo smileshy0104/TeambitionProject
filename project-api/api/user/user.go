@@ -25,9 +25,9 @@ func (*HandlerUser) GetCaptcha(ctx *gin.Context) {
 		ctx.JSON(200, result.Fail(-1, "不合法"))
 		return
 	}
-	//3.生成验证码
+	//3. 生成验证码
 	code := "123456"
-	//4. 发送验证码
+	//4. 发送验证码（调用短信平台使用协程进行）
 	go func() {
 		time.Sleep(2 * time.Second)
 		log.Println("调用短信平台发送短信")
