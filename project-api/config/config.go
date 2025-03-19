@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"project-common/logs"
 )
 
 // C 是配置的全局实例
@@ -53,6 +54,7 @@ func InitConfig() *Config {
 	}
 	// 读取服务器和Etcd配置
 	conf.ReadServerConfig()
+	conf.InitZapLog()
 	conf.ReadEtcdConfig()
 	return conf
 }
@@ -64,6 +66,22 @@ func (c *Config) ReadServerConfig() {
 	sc.Name = c.viper.GetString("server.name")
 	sc.Addr = c.viper.GetString("server.addr")
 	c.SC = sc
+}
+
+func (c *Config) InitZapLog() {
+	//从配置中读取日志配置，初始化日志
+	lc := &logs.LogConfig{
+		DebugFileName: c.viper.GetString("zap.debugFileName"),
+		InfoFileName:  c.viper.GetString("zap.infoFileName"),
+		WarnFileName:  c.viper.GetString("zap.warnFileName"),
+		MaxSize:       c.viper.GetInt("maxSize"),
+		MaxAge:        c.viper.GetInt("maxAge"),
+		MaxBackups:    c.viper.GetInt("maxBackups"),
+	}
+	err := logs.InitLogger(lc)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 // ReadEtcdConfig 从viper实例中读取Etcd配置信息

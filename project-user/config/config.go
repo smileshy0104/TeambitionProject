@@ -1,13 +1,17 @@
 package config
 
 import (
+	"github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"project-common/logs"
 )
 
+// C 是全局配置变量，用于存储应用程序的配置信息
 var C = InitConfig()
 
+// Config 是应用程序配置的结构体，包含viper实例和配置信息的子结构体
 type Config struct {
 	viper      *viper.Viper
 	SC         *ServerConfig
@@ -15,11 +19,13 @@ type Config struct {
 	EtcdConfig *EtcdConfig
 }
 
+// ServerConfig 服务器配置的结构体，包含服务器的名称和地址
 type ServerConfig struct {
 	Name string
 	Addr string
 }
 
+// GrpcConfig gRPC服务配置的结构体，包含服务的名称、地址、版本和权重
 type GrpcConfig struct {
 	Name    string
 	Addr    string
@@ -27,10 +33,12 @@ type GrpcConfig struct {
 	Weight  int64
 }
 
+// EtcdConfig Etcd配置的结构体，包含Etcd的地址列表
 type EtcdConfig struct {
 	Addrs []string
 }
 
+// InitConfig 初始化配置，读取配置文件并解析到Config结构体
 func InitConfig() *Config {
 	conf := &Config{viper: viper.New()}
 	workDir, _ := os.Getwd()
@@ -43,11 +51,13 @@ func InitConfig() *Config {
 		log.Fatalln(err)
 	}
 	conf.ReadServerConfig()
+	conf.InitZapLog()
 	conf.ReadGrpcConfig()
 	conf.ReadEtcdConfig()
 	return conf
 }
 
+// ReadServerConfig 读取服务器配置信息并存储到Config结构体
 func (c *Config) ReadServerConfig() {
 	sc := &ServerConfig{}
 	sc.Name = c.viper.GetString("server.name")
@@ -55,6 +65,23 @@ func (c *Config) ReadServerConfig() {
 	c.SC = sc
 }
 
+func (c *Config) InitZapLog() {
+	//从配置中读取日志配置，初始化日志
+	lc := &logs.LogConfig{
+		DebugFileName: c.viper.GetString("zap.debugFileName"),
+		InfoFileName:  c.viper.GetString("zap.infoFileName"),
+		WarnFileName:  c.viper.GetString("zap.warnFileName"),
+		MaxSize:       c.viper.GetInt("maxSize"),
+		MaxAge:        c.viper.GetInt("maxAge"),
+		MaxBackups:    c.viper.GetInt("maxBackups"),
+	}
+	err := logs.InitLogger(lc)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+// ReadGrpcConfig 读取gRPC服务配置信息并存储到Config结构体
 func (c *Config) ReadGrpcConfig() {
 	gc := &GrpcConfig{}
 	gc.Name = c.viper.GetString("grpc.name")
@@ -64,6 +91,16 @@ func (c *Config) ReadGrpcConfig() {
 	c.GC = gc
 }
 
+// ReadRedisConfig 读取Redis配置信息并返回redis.Options配置项
+func (c *Config) ReadRedisConfig() *redis.Options {
+	return &redis.Options{
+		Addr:     c.viper.GetString("redis.host") + ":" + c.viper.GetString("redis.port"),
+		Password: c.viper.GetString("redis.password"),
+		DB:       c.viper.GetInt("redis.db"),
+	}
+}
+
+// ReadEtcdConfig 读取Etcd配置信息并存储到Config结构体
 func (c *Config) ReadEtcdConfig() {
 	ec := &EtcdConfig{}
 	var addrs []string
