@@ -1,10 +1,14 @@
 package user
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	common "project-common"
+	"project-common/errs"
+	loginServiceV1 "project-user/pkg/service/login.service.v1"
 	"time"
 )
 
@@ -35,4 +39,18 @@ func (*HandlerUser) GetCaptcha(ctx *gin.Context) {
 		fmt.Println(mobile, code)
 	}()
 	ctx.JSON(200, result.Success("123456"))
+}
+
+func (*HandlerUser) getCaptcha(ctx *gin.Context) {
+	result := &common.Result{}
+	mobile := ctx.PostForm("mobile")
+	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	rsp, err := LoginServiceClient.GetCaptcha(c, &loginServiceV1.CaptchaMessage{Mobile: mobile})
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		ctx.JSON(http.StatusOK, result.Fail(code, msg))
+		return
+	}
+	ctx.JSON(http.StatusOK, result.Success(rsp.Code))
 }
