@@ -1,8 +1,6 @@
 package user
 
-import (
-	loginServiceV1 "project-user/pkg/service/login.service.v1"
-)
+import loginServiceV1 "project-grpc/user/login"
 
 var LoginServiceClient loginServiceV1.LoginServiceClient
 

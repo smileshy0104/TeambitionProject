@@ -25,5 +25,7 @@ func (*RouterUser) Route(r *gin.Engine) {
 	InitRpcUserClient()
 	h := New()
 	// 定义登录验证码获取的API路由，使用POST方法
-	r.POST("/api/project/login/getCaptcha", h.GetCaptcha)
+	r.POST("/project/login/getCaptcha", h.getCaptcha)
+	r.POST("/project/login/register", h.register)
+	r.POST("/project/login", h.login)
 }
