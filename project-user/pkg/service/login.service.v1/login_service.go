@@ -3,23 +3,40 @@ package login_service_v1
 import (
 	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	common "project-common"
+	"project-common/encrypts"
 	"project-common/errs"
+	"project-common/jwts"
+	loginServiceV1 "project-grpc/user/login"
+	"project-user/config"
 	"project-user/internal/dao"
+	"project-user/internal/data/member"
+	"project-user/internal/data/organization"
+	"project-user/internal/database"
+	"project-user/internal/database/tran"
 	"project-user/internal/repo"
 	"project-user/pkg/model"
+	"strconv"
 	"time"
 )
 
 type LoginService struct {
-	UnimplementedLoginServiceServer
-	cache repo.Cache
+	loginServiceV1.UnimplementedLoginServiceServer
+	cache            repo.Cache
+	memberRepo       repo.MemberRepo
+	organizationRepo repo.OrganizationRepo
+	transaction      tran.Transaction
 }
 
 func New() *LoginService {
 	return &LoginService{
-		cache: dao.Rc,
+		cache:            dao.Rc,
+		memberRepo:       dao.NewMemberDao(),
+		organizationRepo: dao.NewOrganizationDao(),
+		transaction:      dao.NewTransaction(),
 	}
 }
 
@@ -46,4 +63,122 @@ func (ls *LoginService) GetCaptcha(ctx context.Context, msg *CaptchaMessage) (*C
 		}
 	}()
 	return &CaptchaResponse{Code: code}, nil
+}
+
+func (ls *LoginService) Register(ctx context.Context, msg *loginServiceV1.RegisterMessage) (*loginServiceV1.RegisterResponse, error) {
+	c := context.Background()
+	//1.可以校验参数
+	//2.校验验证码
+	redisCode, err := ls.cache.Get(c, model.RegisterRedisKey+msg.Mobile)
+	if err == redis.Nil {
+		return nil, errs.GrpcError(model.CaptchaNotExist)
+	}
+	if err != nil {
+		zap.L().Error("Register redis get error", zap.Error(err))
+		return nil, errs.GrpcError(model.RedisError)
+	}
+	if redisCode != msg.Captcha {
+		return nil, errs.GrpcError(model.CaptchaError)
+	}
+	//3.校验业务逻辑（邮箱是否被注册 账号是否被注册 手机号是否被注册）
+	exist, err := ls.memberRepo.GetMemberByEmail(c, msg.Email)
+	if err != nil {
+		zap.L().Error("Register db get error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if exist {
+		return nil, errs.GrpcError(model.EmailExist)
+	}
+	exist, err = ls.memberRepo.GetMemberByAccount(c, msg.Name)
+	if err != nil {
+		zap.L().Error("Register db get error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if exist {
+		return nil, errs.GrpcError(model.AccountExist)
+	}
+	exist, err = ls.memberRepo.GetMemberByMobile(c, msg.Mobile)
+	if err != nil {
+		zap.L().Error("Register db get error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if exist {
+		return nil, errs.GrpcError(model.MobileExist)
+	}
+	//4.执行业务 将数据存入member表 生成一个数据 存入组织表 organization
+	pwd := encrypts.Md5(msg.Password)
+	mem := &member.Member{
+		Account:       msg.Name,
+		Password:      pwd,
+		Name:          msg.Name,
+		Mobile:        msg.Mobile,
+		Email:         msg.Email,
+		CreateTime:    time.Now().UnixMilli(),
+		LastLoginTime: time.Now().UnixMilli(),
+		Status:        model.Normal,
+	}
+	err = ls.transaction.Action(func(conn database.DbConn) error {
+		err = ls.memberRepo.SaveMember(conn, c, mem)
+		if err != nil {
+			zap.L().Error("Register db SaveMember error", zap.Error(err))
+			return errs.GrpcError(model.DBError)
+		}
+		//存入组织
+		org := &organization.Organization{
+			Name:       mem.Name + "个人组织",
+			MemberId:   mem.Id,
+			CreateTime: time.Now().UnixMilli(),
+			Personal:   model.Personal,
+			Avatar:     "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fc-ssl.dtstatic.com%2Fuploads%2Fblog%2F202103%2F31%2F20210331160001_9a852.thumb.1000_0.jpg&refer=http%3A%2F%2Fc-ssl.dtstatic.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1673017724&t=ced22fc74624e6940fd6a89a21d30cc5",
+		}
+		err = ls.organizationRepo.SaveOrganization(conn, c, org)
+		if err != nil {
+			zap.L().Error("register SaveOrganization db err", zap.Error(err))
+			return errs.GrpcError(model.DBError)
+		}
+		return nil
+	})
+
+	//5. 返回
+	return &loginServiceV1.RegisterResponse{}, err
+}
+
+func (ls *LoginService) Login(ctx context.Context, msg *loginServiceV1.LoginMessage) (*loginServiceV1.LoginResponse, error) {
+	c := context.Background()
+	//1.去数据库查询 账号密码是否正确
+	pwd := encrypts.Md5(msg.Password)
+	mem, err := ls.memberRepo.FindMember(c, msg.Account, pwd)
+	if err != nil {
+		zap.L().Error("Login db FindMember error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if mem == nil {
+		return nil, errs.GrpcError(model.AccountAndPwdError)
+	}
+	memMsg := &loginServiceV1.MemberMessage{}
+	err = copier.Copy(memMsg, mem)
+	//2.根据用户id查组织
+	orgs, err := ls.organizationRepo.FindOrganizationByMemId(c, mem.Id)
+	if err != nil {
+		zap.L().Error("Login db FindMember error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	var orgsMessage []*loginServiceV1.OrganizationMessage
+	err = copier.Copy(&orgsMessage, orgs)
+	//3.用jwt生成token
+	memIdStr := strconv.FormatInt(mem.Id, 10)
+	exp := time.Duration(config.C.JwtConfig.AccessExp*3600*24) * time.Second
+	rExp := time.Duration(config.C.JwtConfig.RefreshExp*3600*24) * time.Second
+	token := jwts.CreateToken(memIdStr, exp, config.C.JwtConfig.AccessSecret, rExp, config.C.JwtConfig.RefreshSecret)
+	tokenList := &loginServiceV1.TokenMessage{
+		AccessToken:    token.AccessToken,
+		RefreshToken:   token.RefreshToken,
+		AccessTokenExp: token.AccessExp,
+		TokenType:      "bearer",
+	}
+	return &loginServiceV1.LoginResponse{
+		Member:           memMsg,
+		OrganizationList: orgsMessage,
+		TokenList:        tokenList,
+	}, nil
 }
