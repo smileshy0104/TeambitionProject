@@ -280,17 +280,33 @@ func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage
 	return &login.LoginResponse{Member: memMsg}, nil
 }
 
+// MyOrgList 获取用户所属的组织列表
+// 该方法根据用户ID查询数据库中相关的组织信息，并返回组织列表
+// 参数:
 func (l *LoginService) MyOrgList(ctx context.Context, msg *login.UserMessage) (*login.OrgListResponse, error) {
+	// 提取用户ID
 	memId := msg.MemId
+
+	// 调用组织仓库的FindOrganizationByMemId方法查询用户所属的组织
 	orgs, err := l.organizationRepo.FindOrganizationByMemId(ctx, memId)
 	if err != nil {
+		// 如果查询过程中出现错误，记录错误日志并返回相应的gRPC错误
 		zap.L().Error("MyOrgList FindOrganizationByMemId err", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
+
+	// 初始化一个组织消息列表，用于存储转换后的组织信息
 	var orgsMessage []*login.OrganizationMessage
+
+	// 将查询到的组织信息复制到组织消息列表中
 	err = copier.Copy(&orgsMessage, orgs)
+
+	// 对每个组织的消息进行处理，加密组织ID
 	for _, org := range orgsMessage {
+		// 使用AES密钥加密组织ID，并将加密后的结果赋值给组织的Code字段
 		org.Code, _ = encrypts.EncryptInt64(org.Id, model.AESKey)
 	}
+
+	// 构建并返回包含组织消息列表的响应对象
 	return &login.OrgListResponse{OrganizationList: orgsMessage}, nil
 }

@@ -171,21 +171,36 @@ func (u *HandlerUser) login(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Success(rsp))
 }
 
+// myOrgList 处理用户获取自己所在的组织列表的请求。
+// c *gin.Context: Gin框架的上下文对象，用于处理HTTP请求和响应。
 func (u *HandlerUser) myOrgList(c *gin.Context) {
+	// 初始化结果对象，用于构造响应结果。
 	result := &common.Result{}
+
+	// 从上下文中获取当前用户的memberId。
 	memberIdStr, _ := c.Get("memberId")
+	// 将memberId转换为int64类型。
 	memberId := memberIdStr.(int64)
+
+	// 调用RPC服务，获取当前用户所在的组织列表。
 	list, err2 := rpc.LoginServiceClient.MyOrgList(context.Background(), &login.UserMessage{MemId: memberId})
+	// 如果发生错误，解析gRPC错误并返回相应的错误响应。
 	if err2 != nil {
 		code, msg := errs.ParseGrpcError(err2)
 		c.JSON(http.StatusOK, result.Fail(code, msg))
 		return
 	}
+
+	// 如果组织列表为空，返回空的组织列表。
 	if list.OrganizationList == nil {
 		c.JSON(http.StatusOK, result.Success([]*user.OrganizationList{}))
 		return
 	}
+
+	// 初始化组织列表变量。
 	var orgs []*user.OrganizationList
+	// 将从RPC服务获取的组织列表复制到本地变量中。
 	copier.Copy(&orgs, list.OrganizationList)
+	// 返回成功的响应，包含组织列表。
 	c.JSON(http.StatusOK, result.Success(orgs))
 }
