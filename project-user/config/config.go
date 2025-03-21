@@ -40,6 +40,7 @@ type EtcdConfig struct {
 	Addrs []string
 }
 
+// MysqlConfig MySQL数据库配置的结构体，包含连接数据库所需的信息
 type MysqlConfig struct {
 	Username string
 	Password string
@@ -48,6 +49,7 @@ type MysqlConfig struct {
 	Db       string
 }
 
+// JwtConfig JWT配置的结构体，包含JWT的过期时间和密钥
 type JwtConfig struct {
 	AccessExp     int64
 	RefreshExp    int64
@@ -84,8 +86,8 @@ func (c *Config) ReadServerConfig() {
 	c.SC = sc
 }
 
+// InitZapLog 初始化日志配置
 func (c *Config) InitZapLog() {
-	//从配置中读取日志配置，初始化日志
 	lc := &logs.LogConfig{
 		DebugFileName: c.viper.GetString("zap.debugFileName"),
 		InfoFileName:  c.viper.GetString("zap.infoFileName"),
@@ -131,6 +133,7 @@ func (c *Config) ReadEtcdConfig() {
 	c.EtcdConfig = ec
 }
 
+// InitMysqlConfig 初始化MySQL数据库配置
 func (c *Config) InitMysqlConfig() {
 	mc := &MysqlConfig{
 		Username: c.viper.GetString("mysql.username"),
@@ -141,6 +144,8 @@ func (c *Config) InitMysqlConfig() {
 	}
 	c.MysqlConfig = mc
 }
+
+// InitJwtConfig 初始化JWT配置
 func (c *Config) InitJwtConfig() {
 	mc := &JwtConfig{
 		AccessSecret:  c.viper.GetString("jwt.accessSecret"),
