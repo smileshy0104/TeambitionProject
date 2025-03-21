@@ -14,14 +14,17 @@ import (
 	"time"
 )
 
+// HandlerUser 用户处理结构体
 type HandlerUser struct {
 }
 
+// New 创建新的HandlerUser实例
 func New() *HandlerUser {
 	return &HandlerUser{}
 }
 
 // GetCaptcha 获取手机验证码
+// 该方法负责处理获取验证码的请求，包括参数验证和验证码发送
 func (*HandlerUser) GetCaptcha(ctx *gin.Context) {
 	result := &common.Result{}
 	//1. 获取参数
@@ -43,6 +46,8 @@ func (*HandlerUser) GetCaptcha(ctx *gin.Context) {
 	ctx.JSON(200, result.Success("123456"))
 }
 
+// getCaptcha 获取手机验证码（调用GRPC服务）
+// 该方法通过调用GRPC服务来获取验证码，并返回给客户端
 func (*HandlerUser) getCaptcha(ctx *gin.Context) {
 	result := &common.Result{}
 	mobile := ctx.PostForm("mobile")
@@ -57,6 +62,8 @@ func (*HandlerUser) getCaptcha(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, result.Success(rsp.Code))
 }
 
+// register 用户注册
+// 该方法处理用户注册请求，包括参数验证和调用GRPC服务进行注册
 func (u *HandlerUser) register(c *gin.Context) {
 	//1.接收参数 参数模型
 	result := &common.Result{}
@@ -90,6 +97,8 @@ func (u *HandlerUser) register(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Success(""))
 }
 
+// login 用户登录
+// 该方法处理用户登录请求，调用GRPC服务进行登录验证，并返回登录结果
 func (u *HandlerUser) login(c *gin.Context) {
 	//1.接收参数 参数模型
 	result := &common.Result{}

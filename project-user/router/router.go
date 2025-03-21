@@ -8,6 +8,7 @@ import (
 	"net"
 	"project-common/discovery"
 	"project-common/logs"
+	"project-grpc/user/login"
 	"project-user/config"
 	loginServiceV1 "project-user/pkg/service/login.service.v1"
 )
@@ -57,7 +58,7 @@ func RegisterGrpc() *grpc.Server {
 	c := gRPCConfig{
 		Addr: config.C.GC.Addr,
 		RegisterFunc: func(g *grpc.Server) {
-			loginServiceV1.RegisterLoginServiceServer(g, loginServiceV1.New())
+			login.RegisterLoginServiceServer(g, loginServiceV1.New())
 		}}
 	s := grpc.NewServer()
 	c.RegisterFunc(s)

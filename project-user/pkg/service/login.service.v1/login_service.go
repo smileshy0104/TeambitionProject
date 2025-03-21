@@ -10,7 +10,7 @@ import (
 	"project-common/encrypts"
 	"project-common/errs"
 	"project-common/jwts"
-	loginServiceV1 "project-grpc/user/login"
+	"project-grpc/user/login"
 	"project-user/config"
 	"project-user/internal/dao"
 	"project-user/internal/data/member"
@@ -24,7 +24,7 @@ import (
 )
 
 type LoginService struct {
-	loginServiceV1.UnimplementedLoginServiceServer
+	login.UnimplementedLoginServiceServer
 	cache            repo.Cache
 	memberRepo       repo.MemberRepo
 	organizationRepo repo.OrganizationRepo
@@ -40,7 +40,7 @@ func New() *LoginService {
 	}
 }
 
-func (ls *LoginService) GetCaptcha(ctx context.Context, msg *CaptchaMessage) (*CaptchaResponse, error) {
+func (ls *LoginService) GetCaptcha(ctx context.Context, msg *login.CaptchaMessage) (*login.CaptchaResponse, error) {
 	//1.获取参数
 	mobile := msg.Mobile
 	//2.校验参数
@@ -57,15 +57,14 @@ func (ls *LoginService) GetCaptcha(ctx context.Context, msg *CaptchaMessage) (*C
 		//5.存储验证码 redis当中 过期时间15分钟
 		c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		err := ls.cache.Put(c, "REGISTER_"+mobile, code, 15*time.Minute)
+		err := ls.cache.Put(c, model.RegisterRedisKey+mobile, code, 15*time.Minute)
 		if err != nil {
 			zap.L().Info(fmt.Sprintf("验证码存入redis出错,cause by: %v \n", err))
 		}
 	}()
-	return &CaptchaResponse{Code: code}, nil
+	return &login.CaptchaResponse{Code: code}, nil
 }
-
-func (ls *LoginService) Register(ctx context.Context, msg *loginServiceV1.RegisterMessage) (*loginServiceV1.RegisterResponse, error) {
+func (ls *LoginService) Register(ctx context.Context, msg *login.RegisterMessage) (*login.RegisterResponse, error) {
 	c := context.Background()
 	//1.可以校验参数
 	//2.校验验证码
@@ -140,10 +139,10 @@ func (ls *LoginService) Register(ctx context.Context, msg *loginServiceV1.Regist
 	})
 
 	//5. 返回
-	return &loginServiceV1.RegisterResponse{}, err
+	return &login.RegisterResponse{}, err
 }
 
-func (ls *LoginService) Login(ctx context.Context, msg *loginServiceV1.LoginMessage) (*loginServiceV1.LoginResponse, error) {
+func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
 	c := context.Background()
 	//1.去数据库查询 账号密码是否正确
 	pwd := encrypts.Md5(msg.Password)
@@ -155,7 +154,7 @@ func (ls *LoginService) Login(ctx context.Context, msg *loginServiceV1.LoginMess
 	if mem == nil {
 		return nil, errs.GrpcError(model.AccountAndPwdError)
 	}
-	memMsg := &loginServiceV1.MemberMessage{}
+	memMsg := &login.MemberMessage{}
 	err = copier.Copy(memMsg, mem)
 	//2.根据用户id查组织
 	orgs, err := ls.organizationRepo.FindOrganizationByMemId(c, mem.Id)
@@ -163,20 +162,20 @@ func (ls *LoginService) Login(ctx context.Context, msg *loginServiceV1.LoginMess
 		zap.L().Error("Login db FindMember error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	var orgsMessage []*loginServiceV1.OrganizationMessage
+	var orgsMessage []*login.OrganizationMessage
 	err = copier.Copy(&orgsMessage, orgs)
 	//3.用jwt生成token
 	memIdStr := strconv.FormatInt(mem.Id, 10)
 	exp := time.Duration(config.C.JwtConfig.AccessExp*3600*24) * time.Second
 	rExp := time.Duration(config.C.JwtConfig.RefreshExp*3600*24) * time.Second
 	token := jwts.CreateToken(memIdStr, exp, config.C.JwtConfig.AccessSecret, rExp, config.C.JwtConfig.RefreshSecret)
-	tokenList := &loginServiceV1.TokenMessage{
+	tokenList := &login.TokenMessage{
 		AccessToken:    token.AccessToken,
 		RefreshToken:   token.RefreshToken,
 		AccessTokenExp: token.AccessExp,
 		TokenType:      "bearer",
 	}
-	return &loginServiceV1.LoginResponse{
+	return &login.LoginResponse{
 		Member:           memMsg,
 		OrganizationList: orgsMessage,
 		TokenList:        tokenList,

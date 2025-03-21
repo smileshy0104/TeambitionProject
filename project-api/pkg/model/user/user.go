@@ -5,6 +5,7 @@ import (
 	common "project-common"
 )
 
+// RegisterReq 注册请求结构体
 type RegisterReq struct {
 	Email     string `json:"email" form:"email"`
 	Name      string `json:"name" form:"name"`
@@ -14,10 +15,12 @@ type RegisterReq struct {
 	Captcha   string `json:"captcha" form:"captcha"`
 }
 
+// VerifyPassword 验证密码一致性
 func (r RegisterReq) VerifyPassword() bool {
 	return r.Password == r.Password2
 }
 
+// Verify 验证注册信息的合法性
 func (r RegisterReq) Verify() error {
 	if !common.VerifyEmailFormat(r.Email) {
 		return errors.New("邮箱格式不正确")
@@ -31,16 +34,20 @@ func (r RegisterReq) Verify() error {
 	return nil
 }
 
+// LoginReq 登录请求结构体
 type LoginReq struct {
 	Account  string `json:"account" form:"account"`
 	Password string `json:"password" form:"password"`
 }
 
+// LoginRsp 登录响应结构体
 type LoginRsp struct {
 	Member           Member             `json:"member"`
 	TokenList        TokenList          `json:"tokenList"`
 	OrganizationList []OrganizationList `json:"organizationList"`
 }
+
+// Member 会员信息结构体
 type Member struct {
 	Id     int64  `json:"id"`
 	Name   string `json:"name"`
@@ -48,6 +55,7 @@ type Member struct {
 	Status int    `json:"status"`
 }
 
+// TokenList 令牌列表结构体
 type TokenList struct {
 	AccessToken    string `json:"accessToken"`
 	RefreshToken   string `json:"refreshToken"`
@@ -55,6 +63,7 @@ type TokenList struct {
 	AccessTokenExp int64  `json:"accessTokenExp"`
 }
 
+// OrganizationList 组织列表结构体
 type OrganizationList struct {
 	Id          int64  `json:"id"`
 	Name        string `json:"name"`

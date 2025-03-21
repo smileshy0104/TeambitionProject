@@ -26,6 +26,8 @@ func (*RouterUser) Route(r *gin.Engine) {
 	h := New()
 	// 定义登录验证码获取的API路由，使用POST方法
 	r.POST("/project/login/getCaptcha", h.getCaptcha)
+	// 定义用户注册的API路由，使用POST方法
 	r.POST("/project/login/register", h.register)
+	// 定义用户登录的API路由，使用POST方法
 	r.POST("/project/login", h.login)
 }
