@@ -31,7 +31,9 @@ func (*RouterUser) Route(r *gin.Engine) {
 	r.POST("/project/login/register", h.register)
 	// 定义用户登录的API路由，使用POST方法
 	r.POST("/project/login", h.login)
+	// 定义用户退出登录的API路由，使用POST方法
 	org := r.Group("/project/organization")
+	// 使用TokenVerify中间件对组织列表的API进行身份验证
 	org.Use(midd.TokenVerify())
 	org.POST("/_getOrgList", h.myOrgList)
 }

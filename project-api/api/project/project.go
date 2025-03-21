@@ -16,6 +16,10 @@ import (
 type HandlerProject struct {
 }
 
+func New() *HandlerProject {
+	return &HandlerProject{}
+}
+
 func (p *HandlerProject) index(c *gin.Context) {
 	result := &common.Result{}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -53,8 +57,4 @@ func (p *HandlerProject) myProjectList(c *gin.Context) {
 		"list":  pms,
 		"total": myProjectResponse.Total,
 	}))
-}
-
-func New() *HandlerProject {
-	return &HandlerProject{}
 }

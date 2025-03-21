@@ -11,9 +11,6 @@ type Page struct {
 }
 
 // Bind 从gin的Context中绑定分页参数，设置默认的分页值
-// 参数:
-//
-//	c *gin.Context - Gin的上下文，用于绑定请求参数
 func (p *Page) Bind(c *gin.Context) {
 	// 尝试从请求中绑定分页参数，错误被忽略
 	_ = c.ShouldBind(&p)
