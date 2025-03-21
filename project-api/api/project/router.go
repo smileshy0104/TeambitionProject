@@ -18,7 +18,7 @@ func init() {
 
 func (*RouterProject) Route(r *gin.Engine) {
 	//初始化grpc的客户端连接
-	InitRpcProjectClient()
+	//InitRpcProjectClient()
 	h := New()
 	group := r.Group("/project/index")
 	group.Use(midd.TokenVerify())

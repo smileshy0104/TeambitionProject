@@ -2,80 +2,143 @@ syntax = "proto3";
 package login.service.v1;
 option go_package = "project-user/pkg/service/login.service.v1";
 
-
+// CaptchaMessage 请求验证码的消息体
 message CaptchaMessage {
+  // mobile 手机号
   string mobile = 1;
 }
+// CaptchaResponse 返回验证码的响应体
 message CaptchaResponse{
+  // code 验证码
   string code = 1;
 }
 
+// RegisterMessage 用户注册的请求消息体
 message RegisterMessage {
+  // email 邮箱
   string email = 1;
+  // name 用户名
   string name = 2;
+  // password 密码
   string password = 3;
+  // mobile 手机号
   string mobile = 4;
+  // captcha 验证码
   string captcha = 5;
 }
+// RegisterResponse 用户注册的响应体
 message RegisterResponse {}
 
+// LoginMessage 用户登录的请求消息体
 message LoginMessage {
+  // account 账号
   string account = 1;
+  // password 密码
   string password = 2;
+  // token 登录令牌
   string token = 3;
 }
+// LoginResponse 用户登录的响应体
 message LoginResponse{
+  // member 用户信息
   MemberMessage member = 1;
+  // organizationList 用户所属的组织列表
   repeated OrganizationMessage organizationList = 2;
+  // tokenList 令牌信息
   TokenMessage tokenList = 3;
 }
+
+// MemberMessage 用户信息消息体
 message MemberMessage {
+  // id 用户ID
   int64 id = 1;
+  // name 用户名
   string name = 2;
+  // mobile 手机号
   string mobile = 3;
+  // realname 真实姓名
   string realname = 4;
+  // account 账号
   string account = 5;
+  // status 用户状态
   int32 status = 6;
+  // lastLoginTime 最后登录时间
   int64  lastLoginTime = 7;
+  // address 地址
   string address = 8;
+  // province 省份
   int32 province = 9;
+  // city 城市
   int32 city = 10;
+  // area 区域
   int32 area = 11;
+  // email 邮箱
   string email = 12;
+  // code 用户代码
   string code = 13;
 }
+
+// OrganizationMessage 组织信息消息体
 message OrganizationMessage {
+  // id 组织ID
   int64 id = 1;
+  // name 组织名称
   string name = 2;
+  // avatar 组织头像
   string avatar = 3;
+  // description 组织描述
   string description = 4;
+  // memberId 组织创建者的用户ID
   int64 memberId = 5;
+  // createTime 创建时间
   int64 createTime = 6;
+  // personal 是否为个人组织
   int32 personal = 7;
+  // address 地址
   string address = 8;
+  // province 省份
   int32 province = 9;
+  // city 城市
   int32 city = 10;
+  // area 区域
   int32 area = 11;
+  // code 组织代码
   string code = 13;
 }
+
+// TokenMessage 令牌信息消息体
 message TokenMessage{
+  // accessToken 访问令牌
   string accessToken = 1;
+  // refreshToken 刷新令牌
   string refreshToken = 2;
+  // tokenType 令牌类型
   string tokenType = 3;
+  // accessTokenExp 访问令牌过期时间
   int64 accessTokenExp = 4;
 }
 
+// UserMessage 用户信息消息体，用于请求用户相关的操作
 message UserMessage{
+  // memId 用户ID
   int64 memId = 1;
 }
+// OrgListResponse 组织列表响应体
 message OrgListResponse{
+  // organizationList 组织列表
   repeated OrganizationMessage organizationList = 1;
 }
 
+// LoginService 登录服务
 service LoginService {
+  // GetCaptcha 获取验证码
   rpc GetCaptcha(CaptchaMessage) returns (CaptchaResponse) {}
+  // Register 用户注册
   rpc Register(RegisterMessage) returns (RegisterResponse) {}
+  // Login 用户登录
   rpc Login(LoginMessage) returns (LoginResponse) {}
+  // TokenVerify 令牌验证
   rpc TokenVerify(LoginMessage) returns (LoginResponse) {}
+  // MyOrgList 获取我的组织列表
   rpc MyOrgList(UserMessage) returns (OrgListResponse) {}
 }
