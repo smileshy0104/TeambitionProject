@@ -239,26 +239,44 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 	}, nil
 }
 
+// TokenVerify 验证用户登录状态
+// 该方法接收一个LoginMessage，其中包含用户提供的token信息
+// 它会解析token，验证其有效性，并从数据库中获取用户信息
+// 如果验证成功，返回包含用户信息的LoginResponse；如果失败，返回错误
 func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
+	// 提取token信息，并处理带有bearer前缀的token
 	token := msg.Token
 	if strings.Contains(token, "bearer") {
 		token = strings.ReplaceAll(token, "bearer ", "")
 	}
+
+	// 解析token，验证其有效性
 	parseToken, err := jwts.ParseToken(token, config.C.JwtConfig.AccessSecret)
 	if err != nil {
+		// 如果token验证失败，记录错误日志，并返回登录错误
 		zap.L().Error("Login  TokenVerify error", zap.Error(err))
 		return nil, errs.GrpcError(model.NoLogin)
 	}
-	//数据库查询 优化点 登录之后 应该把用户信息缓存起来
+
+	// 将解析后的token转换为用户ID
 	id, _ := strconv.ParseInt(parseToken, 10, 64)
+
+	// 根据用户ID从数据库中查询用户信息
+	// 注意：这里可以进行优化，例如在用户登录后缓存用户信息，以减少数据库查询
 	memberById, err := ls.memberRepo.FindMemberById(context.Background(), id)
 	if err != nil {
+		// 如果数据库查询失败，记录错误日志，并返回数据库错误
 		zap.L().Error("TokenVerify db FindMemberById error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
+
+	// 将查询到的用户信息复制到新的MemberMessage对象中，并加密用户ID
 	memMsg := &login.MemberMessage{}
 	copier.Copy(memMsg, memberById)
+	// 加密用户ID
 	memMsg.Code, _ = encrypts.EncryptInt64(memberById.Id, model.AESKey)
+
+	// 返回包含用户信息的登录响应
 	return &login.LoginResponse{Member: memMsg}, nil
 }
 

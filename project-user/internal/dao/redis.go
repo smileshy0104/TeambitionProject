@@ -20,10 +20,13 @@ func init() {
 	}
 }
 
+// Put 存入redis
 func (rc *RedisCache) Put(ctx context.Context, key, value string, expire time.Duration) error {
 	err := rc.rdb.Set(ctx, key, value, expire).Err()
 	return err
 }
+
+// Get 获取redis
 func (rc *RedisCache) Get(ctx context.Context, key string) (string, error) {
 	result, err := rc.rdb.Get(ctx, key).Result()
 	return result, err
