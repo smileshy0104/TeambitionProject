@@ -20,6 +20,7 @@ import (
 	"project-user/internal/repo"
 	"project-user/pkg/model"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -156,6 +157,7 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 	}
 	memMsg := &login.MemberMessage{}
 	err = copier.Copy(memMsg, mem)
+	memMsg.Code, _ = encrypts.EncryptInt64(mem.Id, model.AESKey)
 	//2.根据用户id查组织
 	orgs, err := ls.organizationRepo.FindOrganizationByMemId(c, mem.Id)
 	if err != nil {
@@ -164,8 +166,8 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 	}
 	var orgsMessage []*login.OrganizationMessage
 	err = copier.Copy(&orgsMessage, orgs)
-	for _, org := range orgsMessage {
-		org.Code, _ = encrypts.EncryptInt64(org.Id, model.AESKey)
+	for _, v := range orgsMessage {
+		v.Code, _ = encrypts.EncryptInt64(v.Id, model.AESKey)
 	}
 	//3.用jwt生成token
 	memIdStr := strconv.FormatInt(mem.Id, 10)
@@ -183,4 +185,42 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 		OrganizationList: orgsMessage,
 		TokenList:        tokenList,
 	}, nil
+}
+
+func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
+	token := msg.Token
+	if strings.Contains(token, "bearer") {
+		token = strings.ReplaceAll(token, "bearer ", "")
+	}
+	parseToken, err := jwts.ParseToken(token, config.C.JwtConfig.AccessSecret)
+	if err != nil {
+		zap.L().Error("Login  TokenVerify error", zap.Error(err))
+		return nil, errs.GrpcError(model.NoLogin)
+	}
+	//数据库查询 优化点 登录之后 应该把用户信息缓存起来
+	id, _ := strconv.ParseInt(parseToken, 10, 64)
+	memberById, err := ls.memberRepo.FindMemberById(context.Background(), id)
+	if err != nil {
+		zap.L().Error("TokenVerify db FindMemberById error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	memMsg := &login.MemberMessage{}
+	copier.Copy(memMsg, memberById)
+	memMsg.Code, _ = encrypts.EncryptInt64(memberById.Id, model.AESKey)
+	return &login.LoginResponse{Member: memMsg}, nil
+}
+
+func (l *LoginService) MyOrgList(ctx context.Context, msg *login.UserMessage) (*login.OrgListResponse, error) {
+	memId := msg.MemId
+	orgs, err := l.organizationRepo.FindOrganizationByMemId(ctx, memId)
+	if err != nil {
+		zap.L().Error("MyOrgList FindOrganizationByMemId err", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	var orgsMessage []*login.OrganizationMessage
+	err = copier.Copy(&orgsMessage, orgs)
+	for _, org := range orgsMessage {
+		org.Code, _ = encrypts.EncryptInt64(org.Id, model.AESKey)
+	}
+	return &login.OrgListResponse{OrganizationList: orgsMessage}, nil
 }

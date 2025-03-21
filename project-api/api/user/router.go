@@ -5,6 +5,7 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	"log"
+	"project-api/api/midd"
 	"project-api/router"
 )
 
@@ -30,4 +31,7 @@ func (*RouterUser) Route(r *gin.Engine) {
 	r.POST("/project/login/register", h.register)
 	// 定义用户登录的API路由，使用POST方法
 	r.POST("/project/login", h.login)
+	org := r.Group("/project/organization")
+	org.Use(midd.TokenVerify())
+	org.POST("/_getOrgList", h.myOrgList)
 }
