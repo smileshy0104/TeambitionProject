@@ -123,7 +123,7 @@ type ProjectTemplate struct {
 }
 
 func (*ProjectTemplate) TableName() string {
-	return "ms_project_template"
+	return "project_template"
 }
 
 type ProjectTemplateAll struct {
@@ -140,10 +140,18 @@ type ProjectTemplateAll struct {
 	Code             string
 }
 
+// Convert 方法用于将 ProjectTemplate 类型的实例转换为 ProjectTemplateAll 类型的实例。
+// 这个方法主要负责加密一些敏感字段，并组装一个新的结构体实例。
+// 参数 taskStages 是一个指向任务阶段名称列表的指针，表示项目模板中的各个任务阶段。
 func (pt ProjectTemplate) Convert(taskStages []*task.TaskStagesOnlyName) *ProjectTemplateAll {
+	// 加密组织代码
 	organizationCode, _ := encrypts.EncryptInt64(pt.OrganizationCode, model.AESKey)
+	// 加密成员代码
 	memberCode, _ := encrypts.EncryptInt64(pt.MemberCode, model.AESKey)
+	// 加密项目模板代码（这里使用项目模板的 ID 进行加密）
 	code, _ := encrypts.EncryptInt64(int64(pt.Id), model.AESKey)
+
+	// 创建并初始化一个 ProjectTemplateAll 类型的实例
 	pta := &ProjectTemplateAll{
 		Id:               pt.Id,
 		Name:             pt.Name,
@@ -157,8 +165,11 @@ func (pt ProjectTemplate) Convert(taskStages []*task.TaskStagesOnlyName) *Projec
 		TaskStages:       taskStages,
 		Code:             code,
 	}
+	// 返回转换后的 ProjectTemplateAll 实例
 	return pta
 }
+
+// ToProjectTemplateIds 获取项目模板ids
 func ToProjectTemplateIds(pts []ProjectTemplate) []int {
 	var ids []int
 	for _, v := range pts {

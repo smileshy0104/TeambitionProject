@@ -24,14 +24,14 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group := r.Group("/project")
 	// 使用TokenVerify中间件对项目列表的API进行身份验证
 	group.Use(midd.TokenVerify())
-	group.POST("/index", h.index)
-	group.POST("/project/selfList", h.myProjectList)
-	group.POST("/project", h.myProjectList)
-	group.POST("/project_template", h.projectTemplate)
-	group.POST("/project/save", h.projectSave)
-	group.POST("/project/read", h.readProject)
-	group.POST("/project/recycle", h.recycleProject)
-	group.POST("/project/recovery", h.recoveryProject)
-	group.POST("/project_collect/collect", h.collectProject)
-	group.POST("/project/edit", h.editProject)
+	group.POST("/index", h.index)                            // Index 获取项目的菜单列表
+	group.POST("/project/selfList", h.myProjectList)         // myProjectList 获取用户自身项目列表请求
+	group.POST("/project", h.myProjectList)                  // myProjectList 获取项目列表请求
+	group.POST("/project_template", h.projectTemplate)       // projectTemplate 获取项目模板列表请求
+	group.POST("/project/save", h.projectSave)               // projectSave 保存项目请求
+	group.POST("/project/read", h.readProject)               // readProject 读取项目请求
+	group.POST("/project/recycle", h.recycleProject)         // recycleProject 删除项目请求
+	group.POST("/project/recovery", h.recoveryProject)       // recoveryProject 恢复项目请求
+	group.POST("/project_collect/collect", h.collectProject) // collectProject 收藏项目请求
+	group.POST("/project/edit", h.editProject)               // editProject 编辑项目请求
 }

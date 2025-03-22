@@ -10,6 +10,13 @@ type ProjectTemplateDao struct {
 	conn *gorms.GormConn
 }
 
+func NewProjectTemplateDao() *ProjectTemplateDao {
+	return &ProjectTemplateDao{
+		conn: gorms.New(),
+	}
+}
+
+// FindProjectTemplateSystem 根据系统查询项目模版
 func (p *ProjectTemplateDao) FindProjectTemplateSystem(ctx context.Context, page int64, size int64) (pts []pro.ProjectTemplate, total int64, err error) {
 	session := p.conn.Session(ctx)
 	err = session.
@@ -25,6 +32,7 @@ func (p *ProjectTemplateDao) FindProjectTemplateSystem(ctx context.Context, page
 	return pts, total, err
 }
 
+// FindProjectTemplateCustom 根据用户查询项目模版
 func (p *ProjectTemplateDao) FindProjectTemplateCustom(ctx context.Context, memId int64, organizationCode int64, page int64, size int64) (pts []pro.ProjectTemplate, total int64, err error) {
 	session := p.conn.Session(ctx)
 	err = session.
@@ -40,6 +48,7 @@ func (p *ProjectTemplateDao) FindProjectTemplateCustom(ctx context.Context, memI
 	return pts, total, err
 }
 
+// FindProjectTemplateAll 根据组织查询项目模版
 func (p *ProjectTemplateDao) FindProjectTemplateAll(ctx context.Context, organizationCode int64, page int64, size int64) (pts []pro.ProjectTemplate, total int64, err error) {
 	session := p.conn.Session(ctx)
 	err = session.
@@ -53,10 +62,4 @@ func (p *ProjectTemplateDao) FindProjectTemplateAll(ctx context.Context, organiz
 	}
 	err = session.Model(&pro.ProjectTemplate{}).Where("organization_code=?", organizationCode).Count(&total).Error
 	return pts, total, err
-}
-
-func NewProjectTemplateDao() *ProjectTemplateDao {
-	return &ProjectTemplateDao{
-		conn: gorms.New(),
-	}
 }
