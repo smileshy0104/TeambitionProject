@@ -325,23 +325,42 @@ func (l *LoginService) MyOrgList(ctx context.Context, msg *login.UserMessage) (*
 	return &login.OrgListResponse{OrganizationList: orgsMessage}, nil
 }
 
+// FindMemInfoById 根据用户ID查找会员信息。
+// 该方法首先通过成员仓库中的FindMemberById方法查找会员信息，
+// 然后通过组织仓库中的FindOrganizationByMemId方法查找该会员所属的组织信息。
+// 最后，将找到的信息进行处理，如加密组织代码，并格式化创建时间，然后返回会员信息。
 func (ls *LoginService) FindMemInfoById(ctx context.Context, msg *login.UserMessage) (*login.MemberMessage, error) {
+	// 通过成员仓库中的FindMemberById方法查找会员信息。
 	memberById, err := ls.memberRepo.FindMemberById(context.Background(), msg.MemId)
 	if err != nil {
+		// 如果查找过程中出现错误，记录日志并返回错误。
 		zap.L().Error("TokenVerify db FindMemberById error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
+
+	// 初始化会员信息对象。
 	memMsg := &login.MemberMessage{}
+	// 将查找到的会员信息复制到会员信息对象中。
 	copier.Copy(memMsg, memberById)
+	// 加密会员ID并赋值给会员信息对象。
 	memMsg.Code, _ = encrypts.EncryptInt64(memberById.Id, model.AESKey)
+
+	// 通过组织仓库中的FindOrganizationByMemId方法查找该会员所属的组织信息。
 	orgs, err := ls.organizationRepo.FindOrganizationByMemId(context.Background(), memberById.Id)
 	if err != nil {
+		// 如果查找过程中出现错误，记录日志并返回错误。
 		zap.L().Error("TokenVerify db FindMember error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
+
+	// 如果找到了所属组织信息，则加密组织ID并赋值给会员信息对象。
 	if len(orgs) > 0 {
 		memMsg.OrganizationCode, _ = encrypts.EncryptInt64(orgs[0].Id, model.AESKey)
 	}
+
+	// 格式化会员信息的创建时间。
 	memMsg.CreateTime = tms.FormatByMill(memberById.CreateTime)
+
+	// 返回处理后的会员信息和空错误。
 	return memMsg, nil
 }

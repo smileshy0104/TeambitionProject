@@ -12,6 +12,12 @@ type MemberDao struct {
 	conn *gorms.GormConn
 }
 
+func NewMemberDao() *MemberDao {
+	return &MemberDao{
+		conn: gorms.New(),
+	}
+}
+
 // FindMemberById 根据id查询用户
 func (m *MemberDao) FindMemberById(ctx context.Context, id int64) (mem *member.Member, err error) {
 	err = m.conn.Session(ctx).Where("id=?", id).First(&mem).Error
@@ -26,12 +32,6 @@ func (m *MemberDao) FindMember(ctx context.Context, account string, pwd string) 
 		return nil, nil
 	}
 	return mem, err
-}
-
-func NewMemberDao() *MemberDao {
-	return &MemberDao{
-		conn: gorms.New(),
-	}
 }
 
 // SaveMember 保存用户
