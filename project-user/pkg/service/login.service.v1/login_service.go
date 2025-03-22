@@ -281,7 +281,15 @@ func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage
 	copier.Copy(memMsg, memberById)
 	// 加密用户ID
 	memMsg.Code, _ = encrypts.EncryptInt64(memberById.Id, model.AESKey)
-
+	orgs, err := ls.organizationRepo.FindOrganizationByMemId(context.Background(), memberById.Id)
+	if err != nil {
+		zap.L().Error("TokenVerify db FindMember error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if len(orgs) > 0 {
+		memMsg.OrganizationCode, _ = encrypts.EncryptInt64(orgs[0].Id, model.AESKey)
+	}
+	memMsg.CreateTime = tms.FormatByMill(memberById.CreateTime)
 	// 返回包含用户信息的登录响应
 	return &login.LoginResponse{Member: memMsg}, nil
 }
