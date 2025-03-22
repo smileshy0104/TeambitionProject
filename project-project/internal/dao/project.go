@@ -27,6 +27,7 @@ func (p *ProjectDao) FindProjectById(ctx context.Context, projectCode int64) (pj
 	return
 }
 
+// FindProjectMemberByPid 根据项目code查询项目成员
 func (p *ProjectDao) FindProjectMemberByPid(ctx context.Context, projectCode int64) (list []*pro.ProjectMember, total int64, err error) {
 	session := p.conn.Session(ctx)
 	err = session.Model(&pro.ProjectMember{}).

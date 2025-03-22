@@ -19,4 +19,6 @@ type MemberRepo interface {
 	FindMember(ctx context.Context, account string, pwd string) (mem *member.Member, err error)
 	// FindMemberById 根据会员ID查找会员信息
 	FindMemberById(background context.Context, id int64) (mem *member.Member, err error)
+	// FindMemberByIds 根据会员ID列表查找会员信息
+	FindMemberByIds(background context.Context, ids []int64) (list []*member.Member, err error)
 }

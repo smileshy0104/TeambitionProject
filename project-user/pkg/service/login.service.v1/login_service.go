@@ -430,3 +430,36 @@ func (ls *LoginService) FindMemInfoById(ctx context.Context, msg *login.UserMess
 	// 返回处理后的会员信息和空错误。
 	return memMsg, nil
 }
+
+// FindMemInfoByIds 根据用户ID列表查询会员信息。
+// 该方法从数据库中获取会员信息，并将结果格式化后返回。
+func (ls *LoginService) FindMemInfoByIds(ctx context.Context, msg *login.UserMessage) (*login.MemberMessageList, error) {
+	// 调用memberRepo的FindMemberByIds方法查询会员信息。
+	memberList, err := ls.memberRepo.FindMemberByIds(context.Background(), msg.MIds)
+	if err != nil {
+		// 如果查询过程中出现错误，记录错误日志并返回DBError错误。
+		zap.L().Error("FindMemInfoByIds db memberRepo.FindMemberByIds error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	// 如果查询结果为空，返回一个空的MemberMessageList对象。
+	if memberList == nil || len(memberList) <= 0 {
+		return &login.MemberMessageList{List: nil}, nil
+	}
+	// 创建一个映射，用于快速查找会员信息。
+	mMap := make(map[int64]*member.Member)
+	for _, v := range memberList {
+		mMap[v.Id] = v
+	}
+	// 创建一个列表，用于存储格式化后的会员信息。
+	var memMsgs []*login.MemberMessage
+	// 使用copier库将查询结果复制到memMsgs列表中。
+	copier.Copy(&memMsgs, memberList)
+	// 遍历memMsgs列表，格式化每个会员信息的创建时间和编码。
+	for _, v := range memMsgs {
+		m := mMap[v.Id]
+		v.CreateTime = tms.FormatByMill(m.CreateTime)
+		v.Code = encrypts.EncryptNoErr(v.Id)
+	}
+	// 返回包含格式化后会员信息列表的MemberMessageList对象。
+	return &login.MemberMessageList{List: memMsgs}, nil
+}

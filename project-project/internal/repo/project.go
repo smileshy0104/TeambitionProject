@@ -23,12 +23,15 @@ type ProjectRepo interface {
 	UpdateDeletedProject(ctx context.Context, code int64, deleted bool) error
 	// SaveProjectCollect 保存项目收藏
 	SaveProjectCollect(ctx context.Context, pc *pro.ProjectCollection) error
-	// 删除项目收藏
+	// DeleteProjectCollect 删除项目收藏
 	DeleteProjectCollect(ctx context.Context, memId int64, projectCode int64) error
-	// 更新项目
+	// UpdateProject 更新项目
 	UpdateProject(ctx context.Context, proj *pro.Project) error
+	// FindProjectMemberByPid 查询项目成员通过项目code
 	FindProjectMemberByPid(ctx context.Context, projectCode int64) (list []*pro.ProjectMember, total int64, err error)
+	// FindProjectById 查询项目通过项目id
 	FindProjectById(ctx context.Context, projectCode int64) (pj *pro.Project, err error)
+	// FindProjectByIds 查询项目通过项目id集合
 	FindProjectByIds(ctx context.Context, pids []int64) (list []*pro.Project, err error)
 }
 

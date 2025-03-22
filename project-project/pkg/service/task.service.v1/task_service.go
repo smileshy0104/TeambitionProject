@@ -92,36 +92,44 @@ func (t *TaskService) TaskStages(co context.Context, msg *task.TaskReqMessage) (
 	return &task.TaskStagesResponse{List: tsMessages, Total: total}, nil
 }
 
+// MemberProjectList 查询项目成员列表
+// 该方法首先根据项目代码查询项目成员信息，然后根据成员ID请求用户信息，
+// 最后组装并返回项目成员的详细信息列表。
 func (t *TaskService) MemberProjectList(co context.Context, msg *task.TaskReqMessage) (*task.MemberProjectResponse, error) {
-	//1. 去 project_member表 去查询 用户id列表
+	// 1. 去 project_member表 去查询 用户id列表
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	projectCode := encrypts.DecryptNoErr(msg.ProjectCode)
+	// 查询项目成员信息通过项目code
 	projectMembers, total, err := t.projectRepo.FindProjectMemberByPid(ctx, projectCode)
 	if err != nil {
 		zap.L().Error("project MemberProjectList projectRepo.FindProjectMemberByPid error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	//2.拿上用户id列表 去请求用户信息
+	// 2.拿上用户id列表 去请求用户信息
 	if projectMembers == nil || len(projectMembers) <= 0 {
 		return &task.MemberProjectResponse{List: nil, Total: 0}, nil
 	}
 	var mIds []int64
+	// 创建一个映射，键为成员ID，值为项目成员对象
 	pmMap := make(map[int64]*pro.ProjectMember)
+	// 遍历项目成员列表，将成员ID添加到 mIds 切片并创建一个映射，键为成员ID，值为项目成员对象
 	for _, v := range projectMembers {
 		mIds = append(mIds, v.MemberCode)
 		pmMap[v.MemberCode] = v
 	}
-	//请求用户信息
+	// 请求用户信息
 	userMsg := &login.UserMessage{
 		MIds: mIds,
 	}
+	// 调用 RPC 客户端请求用户信息
 	memberMessageList, err := rpc.LoginServiceClient.FindMemInfoByIds(ctx, userMsg)
 	if err != nil {
 		zap.L().Error("project MemberProjectList LoginServiceClient.FindMemInfoByIds error", zap.Error(err))
 		return nil, err
 	}
 	var list []*task.MemberProjectMessage
+	// 遍历用户信息列表，将用户信息转换为 MemberProjectMessage 并添加到列表中
 	for _, v := range memberMessageList.List {
 		owner := pmMap[v.Id].IsOwner
 		mpm := &task.MemberProjectMessage{
@@ -138,6 +146,7 @@ func (t *TaskService) MemberProjectList(co context.Context, msg *task.TaskReqMes
 	}
 	return &task.MemberProjectResponse{List: list, Total: total}, nil
 }
+
 func (t *TaskService) TaskList(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskListResponse, error) {
 	stageCode := encrypts.DecryptNoErr(msg.StageCode)
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
