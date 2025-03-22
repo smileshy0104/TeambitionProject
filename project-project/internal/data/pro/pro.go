@@ -1,5 +1,6 @@
 package pro
 
+// Project 项目
 type Project struct {
 	Id                 int64
 	Cover              string
@@ -28,9 +29,10 @@ type Project struct {
 }
 
 func (*Project) TableName() string {
-	return "ms_project"
+	return "project"
 }
 
+// ProjectMember 项目成员
 type ProjectMember struct {
 	Id          int64
 	ProjectCode int64
@@ -41,9 +43,10 @@ type ProjectMember struct {
 }
 
 func (*ProjectMember) TableName() string {
-	return "ms_project_member"
+	return "project_member"
 }
 
+// ProjectAndMember 项目和成员
 type ProjectAndMember struct {
 	Project
 	ProjectCode int64

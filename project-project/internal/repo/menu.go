@@ -6,5 +6,6 @@ import (
 )
 
 type MenuRepo interface {
+	// FindMenus 查询菜单
 	FindMenus(ctx context.Context) ([]*menu.ProjectMenu, error)
 }

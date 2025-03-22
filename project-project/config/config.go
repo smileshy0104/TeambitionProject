@@ -8,8 +8,10 @@ import (
 	"project-common/logs"
 )
 
+// C 是配置的全局实例
 var C = InitConfig()
 
+// Config 是应用配置的结构体
 type Config struct {
 	viper       *viper.Viper
 	SC          *ServerConfig
@@ -19,11 +21,13 @@ type Config struct {
 	JwtConfig   *JwtConfig
 }
 
+// ServerConfig 服务器配置
 type ServerConfig struct {
 	Name string
 	Addr string
 }
 
+// GrpcConfig gRPC服务配置
 type GrpcConfig struct {
 	Name    string
 	Addr    string
@@ -31,10 +35,12 @@ type GrpcConfig struct {
 	Weight  int64
 }
 
+// EtcdConfig Etcd配置
 type EtcdConfig struct {
 	Addrs []string
 }
 
+// MysqlConfig MySQL数据库配置
 type MysqlConfig struct {
 	Username string
 	Password string
@@ -43,6 +49,7 @@ type MysqlConfig struct {
 	Db       string
 }
 
+// JwtConfig JWT配置
 type JwtConfig struct {
 	AccessExp     int64
 	RefreshExp    int64
@@ -50,6 +57,7 @@ type JwtConfig struct {
 	RefreshSecret string
 }
 
+// InitConfig 初始化配置
 func InitConfig() *Config {
 	conf := &Config{viper: viper.New()}
 	workDir, _ := os.Getwd()
@@ -70,8 +78,8 @@ func InitConfig() *Config {
 	return conf
 }
 
+// InitZapLog 初始化日志
 func (c *Config) InitZapLog() {
-	//从配置中读取日志配置，初始化日志
 	lc := &logs.LogConfig{
 		DebugFileName: c.viper.GetString("zap.debugFileName"),
 		InfoFileName:  c.viper.GetString("zap.infoFileName"),
@@ -86,6 +94,7 @@ func (c *Config) InitZapLog() {
 	}
 }
 
+// ReadServerConfig 读取服务器配置
 func (c *Config) ReadServerConfig() {
 	sc := &ServerConfig{}
 	sc.Name = c.viper.GetString("server.name")
@@ -93,6 +102,7 @@ func (c *Config) ReadServerConfig() {
 	c.SC = sc
 }
 
+// ReadGrpcConfig 读取gRPC配置
 func (c *Config) ReadGrpcConfig() {
 	gc := &GrpcConfig{}
 	gc.Name = c.viper.GetString("grpc.name")
@@ -102,6 +112,7 @@ func (c *Config) ReadGrpcConfig() {
 	c.GC = gc
 }
 
+// ReadRedisConfig 读取Redis配置
 func (c *Config) ReadRedisConfig() *redis.Options {
 	return &redis.Options{
 		Addr:     c.viper.GetString("redis.host") + ":" + c.viper.GetString("redis.port"),
@@ -110,6 +121,7 @@ func (c *Config) ReadRedisConfig() *redis.Options {
 	}
 }
 
+// ReadEtcdConfig 读取Etcd配置
 func (c *Config) ReadEtcdConfig() {
 	ec := &EtcdConfig{}
 	var addrs []string
@@ -120,6 +132,8 @@ func (c *Config) ReadEtcdConfig() {
 	ec.Addrs = addrs
 	c.EtcdConfig = ec
 }
+
+// InitMysqlConfig 初始化MySQL配置
 func (c *Config) InitMysqlConfig() {
 	mc := &MysqlConfig{
 		Username: c.viper.GetString("mysql.username"),
@@ -130,6 +144,8 @@ func (c *Config) InitMysqlConfig() {
 	}
 	c.MysqlConfig = mc
 }
+
+// InitJwtConfig 初始化JWT配置
 func (c *Config) InitJwtConfig() {
 	mc := &JwtConfig{
 		AccessSecret:  c.viper.GetString("jwt.accessSecret"),
