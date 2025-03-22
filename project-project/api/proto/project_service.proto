@@ -25,7 +25,10 @@ message MenuMessage {
   int32 isInner = 12;     // 是否为内部菜单
   string values = 13;     // 菜单值（可选）
   int32 showSlider = 14;  // 是否显示侧边栏
-  repeated MenuMessage children = 15; // 子菜单列表，支持嵌套结构
+  string statusText = 15; // 菜单状态文本
+  string innerText  = 16; // 内部菜单文本
+  string fullUrl    = 17; // 完整URL
+  repeated MenuMessage children = 18; // 子菜单列表，支持嵌套结构
 }
 
 // IndexResponse 定义了 Index 方法的响应数据结构
@@ -65,19 +68,127 @@ message ProjectMessage {
   int64 IsOwner = 28;            // 是否为项目拥有者
   string Authorize = 29;         // 授权信息
   string Code = 30;              // 项目编码
+  string ownerName = 31;         // 项目拥有者名称
+  int32 collected = 32;          // 是否已收藏
 }
 
-// ProjectRpcMessage 定义了 FindProjectByMemId 方法的请求参数
-message ProjectRpcMessage {
-  int64 memberId = 1;  // 成员ID，用于查询该成员参与的项目
-  int64 page = 2;      // 分页页码
-  int64 pageSize = 3;  // 每页记录数
+// 项目详情消息，包含项目的各种详细信息
+message ProjectDetailMessage{
+  string Cover = 2; // 项目封面图片URL
+  string Name = 3; // 项目名称
+  string Description = 4; // 项目描述
+  string AccessControlType = 5; // 访问控制类型
+  string WhiteList = 6; // 白名单，允许访问项目的用户列表
+  int32 Order = 7; // 项目排序编号
+  int32 Deleted = 8; // 删除标志，表示项目是否被删除
+  string TemplateCode = 9; // 项目模板代码
+  double Schedule = 10; // 项目进度
+  string CreateTime = 11; // 项目创建时间
+  string OrganizationCode = 12; // 组织代码，表示项目所属的组织
+  string DeletedTime = 13; // 项目删除时间
+  int32 Private = 14; // 私有标志，表示项目是否私有
+  string Prefix = 15; // 项目前缀
+  int32 OpenPrefix = 16; // 开放前缀标志
+  int32 Archive = 17; // 归档标志
+  int64 ArchiveTime = 18; // 归档时间
+  int32 OpenBeginTime = 19; // 开始开放时间
+  int32 OpenTaskPrivate = 20; // 开放任务私有标志
+  string TaskBoardTheme = 21; // 任务看板主题
+  string BeginTime = 22; // 项目开始时间
+  string EndTime = 23; // 项目结束时间
+  int32 AutoUpdateSchedule = 24; // 自动更新进度标志
+  string code = 25; // 项目代码
+  string ownerName = 26; // 项目所有者的名称
+  int32 collected = 27; // 收藏标志
+  string ownerAvatar = 28; // 项目所有者的头像URL
 }
 
-// MyProjectResponse 定义了 FindProjectByMemId 方法的响应数据结构
-message MyProjectResponse {
-  repeated ProjectMessage pm = 1; // 项目列表，包含成员参与的所有项目
-  int64 total = 2;                // 总项目数
+// 保存项目消息，包含项目的基本信息
+message SaveProjectMessage {
+  int64 Id = 1; // 项目ID
+  string Cover = 2; // 项目封面图片URL
+  string Name = 3; // 项目名称
+  string Description = 4; // 项目描述
+  string Code = 5; // 项目代码
+  string CreateTime = 6; // 项目创建时间
+  string TaskBoardTheme = 7; // 任务看板主题
+  string OrganizationCode = 8; // 组织代码，表示项目所属的组织
+}
+
+// 项目RPC消息，用于项目相关的RPC调用
+message ProjectRpcMessage{
+  int64 memberId = 1; // 成员ID
+  string memberName = 2; // 成员名称
+  int64 page = 3; // 分页参数，当前页码
+  int64 pageSize = 4; // 分页参数，每页大小
+  string selectBy = 5; // 查询条件
+  string organizationCode = 6; // 组织代码，表示项目所属的组织
+  int32 viewType = 7; // 查看类型
+  string name = 8; // 项目名称
+  string templateCode = 9; // 项目模板代码
+  string description = 10; // 项目描述
+  int64 id = 11; // 项目ID
+  string projectCode = 12; // 项目代码
+  bool deleted = 13; // 删除标志，表示项目是否被删除
+  string collectType = 14; // 收藏类型
+}
+
+// 项目模板消息，包含项目模板的详细信息
+message ProjectTemplateMessage{
+  int32 id = 1; // 模板ID
+  string name = 2; // 模板名称
+  string description = 3; // 模板描述
+  int32 sort = 4; // 模板排序编号
+  string createTime = 5; // 模板创建时间
+  string organizationCode = 6; // 组织代码，表示模板所属的组织
+  string cover = 7; // 模板封面图片URL
+  string memberCode = 8; // 成员代码，表示模板的创建者
+  int32 isSystem = 9; // 系统标志，表示模板是否为系统模板
+  repeated TaskStages taskStages = 10; // 任务阶段列表
+  string code = 11; // 模板代码
+}
+
+// 任务阶段，表示项目中的一个阶段
+message TaskStages{
+  string name = 1; // 阶段名称
+}
+
+// 项目模板响应，包含项目模板列表和总数量
+message ProjectTemplateResponse{
+  repeated ProjectTemplateMessage ptm = 1; // 项目模板消息列表
+  int64  Total = 2; // 总数量
+}
+
+// 我的项目响应，包含项目列表和总数量
+message MyProjectResponse{
+  repeated ProjectMessage pm = 1; // 项目消息列表
+  int64 total = 2; // 总数量
+}
+
+// 删除项目响应，用于表示项目删除成功
+message DeletedProjectResponse{}
+
+// 收藏项目响应，用于表示项目收藏成功
+message CollectProjectResponse{}
+
+// 更新项目响应，用于表示项目更新成功
+message UpdateProjectResponse{}
+
+// 更新项目消息，包含需要更新的项目信息
+message UpdateProjectMessage{
+  string projectCode = 1; // 项目代码，用于标识需要更新的项目
+  string Cover = 2; // 新的项目封面图片URL
+  string Name = 3; // 新的项目名称
+  string Description = 4; // 新的项目描述
+  double Schedule = 5; // 新的项目进度
+  int32 Private = 6; // 新的私有标志
+  string Prefix = 7; // 新的项目前缀
+  int32 OpenPrefix = 8; // 新的开放前缀标志
+  int32 OpenBeginTime = 9; // 新的开始开放时间
+  int32 OpenTaskPrivate = 10; // 新的开放任务私有标志
+  string TaskBoardTheme = 11; // 新的任务看板主题
+  int32 AutoUpdateSchedule = 12; // 新的自动更新进度标志
+  int64 MemberId = 13; // 成员ID，表示更新者的ID
 }
 
 // ProjectService 定义了项目相关的服务接口
@@ -97,4 +208,10 @@ service ProjectService {
    * @return MyProjectResponse 返回包含项目列表和总项目数的响应。
    */
   rpc FindProjectByMemId(ProjectRpcMessage) returns (MyProjectResponse) {}
+  rpc FindProjectTemplate(ProjectRpcMessage) returns (ProjectTemplateResponse){}
+  rpc SaveProject(ProjectRpcMessage) returns (SaveProjectMessage){}
+  rpc FindProjectDetail(ProjectRpcMessage) returns (ProjectDetailMessage){}
+  rpc UpdateDeletedProject(ProjectRpcMessage) returns (DeletedProjectResponse){}
+  rpc UpdateCollectProject(ProjectRpcMessage) returns (CollectProjectResponse){}
+  rpc UpdateProject(UpdateProjectMessage) returns (UpdateProjectResponse){}
 }

@@ -49,10 +49,14 @@ type LoginRsp struct {
 
 // Member 会员信息结构体
 type Member struct {
-	Id     int64  `json:"id"`
-	Name   string `json:"name"`
-	Mobile string `json:"mobile"`
-	Status int    `json:"status"`
+	Name             string `json:"name"`
+	Mobile           string `json:"mobile"`
+	Status           int    `json:"status"`
+	Code             string `json:"code"`
+	Email            string `json:"email"`
+	CreateTime       string `json:"create_time"`
+	LastLoginTime    string `json:"last_login_time"`
+	OrganizationCode string `json:"organization_code"`
 }
 
 // TokenList 令牌列表结构体
@@ -65,15 +69,15 @@ type TokenList struct {
 
 // OrganizationList 组织列表结构体
 type OrganizationList struct {
-	Id          int64  `json:"id"`
 	Name        string `json:"name"`
 	Avatar      string `json:"avatar"`
 	Description string `json:"description"`
-	MemberId    int64  `json:"memberId"`
-	CreateTime  int64  `json:"createTime"`
+	OwnerCode   string `json:"owner_code"`
+	CreateTime  string `json:"create_time"`
 	Personal    int32  `json:"personal"`
 	Address     string `json:"address"`
 	Province    int32  `json:"province"`
 	City        int32  `json:"city"`
 	Area        int32  `json:"area"`
+	Code        string `json:"code"`
 }

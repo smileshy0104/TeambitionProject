@@ -41,6 +41,8 @@ func TokenVerify() func(*gin.Context) {
 		// 如果认证通过，将用户信息放入gin的上下文中，供后续处理函数使用
 		// 如果认证失败，将不会执行后续的路由处理函数
 		c.Set("memberId", response.Member.Id)
+		c.Set("memberName", response.Member.Name)
+		c.Set("organizationCode", response.Member.OrganizationCode)
 		c.Next() // 继续执行后续的路由处理函数
 	}
 }

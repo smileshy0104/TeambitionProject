@@ -68,3 +68,30 @@ func toChild(childPmcs []*ProjectMenuChild, pmcs []*ProjectMenuChild) {
 		toChild(pmc.Children, pmcs)
 	}
 }
+
+func getFullUrl(url string, params string, values string) string {
+	if (params != "" && values != "") || values != "" {
+		return url + "/" + values
+	}
+	return url
+}
+
+func getInnerText(inner int) string {
+	if inner == 0 {
+		return "导航"
+	}
+	if inner == 1 {
+		return "内页"
+	}
+	return ""
+}
+
+func getStatus(status int) string {
+	if status == 0 {
+		return "禁用"
+	}
+	if status == 1 {
+		return "使用中"
+	}
+	return ""
+}

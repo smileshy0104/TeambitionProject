@@ -47,4 +47,70 @@ type ProjectAndMember struct {
 	JoinTime    int64  `json:"joinTime"`    // 成员加入项目的时间。
 	IsOwner     int64  `json:"isOwner"`     // 是否是项目所有者的标记。
 	Authorize   string `json:"authorize"`   // 成员的权限，定义了成员在项目中的角色和能力。
+	OwnerName   string `json:"owner_name"`  // 项目所有者的名字。
+	Collected   int    `json:"collected"`   // 是否被收藏的标记。
+}
+
+// ProjectDetail 结构体用于描述项目详情，包含了项目基本信息及其拥有者的名称、收藏数和头像。
+type ProjectDetail struct {
+	Project
+	OwnerName   string `json:"owner_name"`   // 项目拥有者的名称
+	Collected   int    `json:"collected"`    // 项目被收藏的次数
+	OwnerAvatar string `json:"owner_avatar"` // 项目拥有者的头像URL
+}
+
+// ProjectTemplate 结构体定义了项目模板的属性，包括任务阶段的列表。
+type ProjectTemplate struct {
+	Id               int                   `json:"id"`                // 模板的唯一标识符
+	Name             string                `json:"name"`              // 模板的名称
+	Description      string                `json:"description"`       // 模板的描述
+	Sort             int                   `json:"sort"`              // 模板的排序值
+	CreateTime       string                `json:"create_time"`       // 模板的创建时间
+	OrganizationCode string                `json:"organization_code"` // 关联的组织代码
+	Cover            string                `json:"cover"`             // 模板的封面图片URL
+	MemberCode       string                `json:"member_code"`       // 成员代码
+	IsSystem         int                   `json:"is_system"`         // 是否为系统内置模板
+	TaskStages       []*TaskStagesOnlyName `json:"task_stages"`       // 任务阶段的列表
+	Code             string                `json:"code"`              // 模板的代码
+}
+
+// TaskStagesOnlyName 结构体仅包含任务阶段的名称，用于精简表示任务阶段信息。
+type TaskStagesOnlyName struct {
+	Name string `json:"name"` // 任务阶段的名称
+}
+
+// SaveProjectRequest 结构体用于保存项目时的请求数据，包括项目的基本信息和所选模板。
+type SaveProjectRequest struct {
+	Name         string `json:"name" form:"name"`                 // 项目的名称
+	TemplateCode string `json:"templateCode" form:"templateCode"` // 所选模板的代码
+	Description  string `json:"description" form:"description"`   // 项目的描述
+	Id           int    `json:"id" form:"id"`                     // 项目的唯一标识符
+}
+
+// SaveProject 结构体表示保存后的项目信息，包括项目的基本属性和创建时间等。
+type SaveProject struct {
+	Id               int64  `json:"id"`                // 项目的唯一标识符
+	Cover            string `json:"cover"`             // 项目的封面图片URL
+	Name             string `json:"name"`              // 项目的名称
+	Description      string `json:"description"`       // 项目的描述
+	Code             string `json:"code"`              // 项目的代码
+	CreateTime       string `json:"create_time"`       // 项目的创建时间
+	TaskBoardTheme   string `json:"task_board_theme"`  // 任务看板的主题
+	OrganizationCode string `json:"organization_code"` // 关联的组织代码
+}
+
+// ProjectReq 结构体用于更新项目信息的请求，包含需要修改的项目详情。
+type ProjectReq struct {
+	ProjectCode        string  `json:"projectCode" form:"projectCode"`                   // 项目的代码
+	Cover              string  `json:"cover" form:"cover"`                               // 项目的封面图片URL
+	Name               string  `json:"name" form:"name"`                                 // 项目的名称
+	Description        string  `json:"description" form:"description"`                   // 项目的描述
+	Schedule           float64 `json:"schedule" form:"schedule"`                         // 项目的进度
+	Private            int     `json:"private" form:"private"`                           // 项目是否私有
+	Prefix             string  `json:"prefix" form:"prefix"`                             // 项目的前缀
+	OpenPrefix         int     `json:"open_prefix" form:"open_prefix"`                   // 是否开放前缀
+	OpenBeginTime      int     `json:"open_begin_time" form:"open_begin_time"`           // 开放开始时间
+	OpenTaskPrivate    int     `json:"open_task_private" form:"open_task_private"`       // 开放任务是否私有
+	TaskBoardTheme     string  `json:"task_board_theme" form:"task_board_theme"`         // 任务看板的主题
+	AutoUpdateSchedule int     `json:"auto_update_schedule" form:"auto_update_schedule"` // 是否自动更新进度
 }

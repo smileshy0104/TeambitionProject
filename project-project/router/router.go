@@ -10,6 +10,7 @@ import (
 	"project-common/logs"
 	"project-grpc/project"
 	"project-project/config"
+	"project-project/internal/rpc"
 	project_service_v1 "project-project/pkg/service/project.service.v1"
 )
 
@@ -86,4 +87,8 @@ func RegisterEtcdServer() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func InitUserRpc() {
+	rpc.InitRpcUserClient()
 }

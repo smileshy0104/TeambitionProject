@@ -76,6 +76,12 @@ message MemberMessage {
   string email = 12;
   // code 用户代码
   string code = 13;
+  // createTime 创建时间
+  string createTime = 14;
+  // organizationCode 组织代码
+  string organizationCode = 15;
+  // avatar 头像
+  string avatar = 16;
 }
 
 // OrganizationMessage 组织信息消息体
@@ -103,7 +109,9 @@ message OrganizationMessage {
   // area 区域
   int32 area = 11;
   // code 组织代码
-  string code = 13;
+  string code = 12;
+  // ownerCode 组织所有者的代码
+  string ownerCode = 13;
 }
 
 // TokenMessage 令牌信息消息体
@@ -141,4 +149,6 @@ service LoginService {
   rpc TokenVerify(LoginMessage) returns (LoginResponse) {}
   // MyOrgList 获取我的组织列表
   rpc MyOrgList(UserMessage) returns (OrgListResponse) {}
+  // FindMemInfoById 根据用户ID获取用户信息
+  rpc FindMemInfoById(UserMessage) returns (MemberMessage) {}
 }
