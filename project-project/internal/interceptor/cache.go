@@ -31,6 +31,8 @@ func New() *CacheInterceptor {
 	cacheMap := make(map[string]any)
 	// 可以在此处添加更多的方法和对应的响应类型
 	// 例如：cacheMap["/project.service.v1.ProjectService/FindProjectByMemId"] = &project.MyProjectResponse{}
+	//cacheMap["/login.service.v1.LoginService/MyOrgList"] = &login.OrgListResponse{}
+	//cacheMap["/login.service.v1.LoginService/FindMemInfoById"] = &login.MemberMessage{}
 	return &CacheInterceptor{cache: dao.Rc, cacheMap: cacheMap}
 }
 
