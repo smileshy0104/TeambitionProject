@@ -27,6 +27,9 @@ type ProjectRepo interface {
 	DeleteProjectCollect(ctx context.Context, memId int64, projectCode int64) error
 	// 更新项目
 	UpdateProject(ctx context.Context, proj *pro.Project) error
+	FindProjectMemberByPid(ctx context.Context, projectCode int64) (list []*pro.ProjectMember, total int64, err error)
+	FindProjectById(ctx context.Context, projectCode int64) (pj *pro.Project, err error)
+	FindProjectByIds(ctx context.Context, pids []int64) (list []*pro.Project, err error)
 }
 
 type ProjectTemplateRepo interface {

@@ -3,7 +3,6 @@ package pro
 import (
 	"project-common/encrypts"
 	"project-common/tms"
-	"project-project/internal/data/task"
 	"project-project/pkg/model"
 )
 
@@ -37,6 +36,14 @@ type Project struct {
 
 func (*Project) TableName() string {
 	return "project"
+}
+
+func ToProjectMap(list []*Project) map[int64]*Project {
+	m := make(map[int64]*Project, len(list))
+	for _, v := range list {
+		m[v.Id] = v
+	}
+	return m
 }
 
 // ProjectMember 项目成员
@@ -136,14 +143,14 @@ type ProjectTemplateAll struct {
 	Cover            string
 	MemberCode       string
 	IsSystem         int
-	TaskStages       []*task.TaskStagesOnlyName
+	TaskStages       []*TaskStagesOnlyName
 	Code             string
 }
 
 // Convert 方法用于将 ProjectTemplate 类型的实例转换为 ProjectTemplateAll 类型的实例。
 // 这个方法主要负责加密一些敏感字段，并组装一个新的结构体实例。
 // 参数 taskStages 是一个指向任务阶段名称列表的指针，表示项目模板中的各个任务阶段。
-func (pt ProjectTemplate) Convert(taskStages []*task.TaskStagesOnlyName) *ProjectTemplateAll {
+func (pt ProjectTemplate) Convert(taskStages []*TaskStagesOnlyName) *ProjectTemplateAll {
 	// 加密组织代码
 	organizationCode, _ := encrypts.EncryptInt64(pt.OrganizationCode, model.AESKey)
 	// 加密成员代码

@@ -9,11 +9,13 @@ import (
 	"project-common/discovery"
 	"project-common/logs"
 	"project-grpc/project"
+	"project-grpc/task"
 )
 
 // ProjectServiceClient 是一个全局变量，用于存储项目服务的 gRPC 客户端实例。
 // 该客户端通过 InitRpcProjectClient 函数初始化，并在整个应用中使用。
 var ProjectServiceClient project.ProjectServiceClient
+var TaskServiceClient task.TaskServiceClient
 
 // InitRpcProjectClient 初始化项目服务的 gRPC 客户端。
 // 该函数通过以下步骤完成初始化：
@@ -36,4 +38,5 @@ func InitRpcProjectClient() {
 	}
 	// 使用已建立的 gRPC 连接创建项目服务的客户端实例。
 	ProjectServiceClient = project.NewProjectServiceClient(conn)
+	TaskServiceClient = task.NewTaskServiceClient(conn)
 }

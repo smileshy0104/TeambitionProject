@@ -114,3 +114,11 @@ type ProjectReq struct {
 	TaskBoardTheme     string  `json:"task_board_theme" form:"task_board_theme"`         // 任务看板的主题
 	AutoUpdateSchedule int     `json:"auto_update_schedule" form:"auto_update_schedule"` // 是否自动更新进度
 }
+
+type MemberProjectResp struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Avatar  string `json:"avatar"`
+	Code    string `json:"code"`
+	IsOwner int    `json:"isOwner"`
+}

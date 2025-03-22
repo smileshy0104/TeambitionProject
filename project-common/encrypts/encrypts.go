@@ -21,6 +21,18 @@ func Md5(str string) string {
 // 初始化向量(IV)是一个固定长度的输入，对于使用相同密钥的每个加密操作，它使得加密输出唯一。
 var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
 
+const AESKey = "sdfgyrhgbxcdgryfhgywertd"
+
+func DecryptNoErr(cipherStr string) int64 {
+	decrypt, _ := Decrypt(cipherStr, AESKey)
+	parseInt, _ := strconv.ParseInt(decrypt, 10, 64)
+	return parseInt
+}
+func EncryptNoErr(id int64) string {
+	str, _ := EncryptInt64(id, AESKey)
+	return str
+}
+
 // EncryptInt64 加密int64类型的ID。
 // 该函数首先将ID转换为字符串，然后调用Encrypt函数进行加密。
 func EncryptInt64(id int64, keyText string) (cipherStr string, err error) {

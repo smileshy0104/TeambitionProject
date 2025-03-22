@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"fmt"
+	"gorm.io/gorm"
 	"project-project/internal/data/pro"
 	"project-project/internal/database"
 	"project-project/internal/database/gorms"
@@ -12,28 +13,44 @@ type ProjectDao struct {
 	conn *gorms.GormConn
 }
 
-func NewProjectDao() *ProjectDao {
-	return &ProjectDao{
-		conn: gorms.New(),
-	}
+func (p *ProjectDao) FindProjectByIds(ctx context.Context, pids []int64) (list []*pro.Project, err error) {
+	session := p.conn.Session(ctx)
+	err = session.Model(&pro.Project{}).Where("id in (?)", pids).Find(&list).Error
+	return
 }
 
-// UpdateProject 更新项目信息
+func (p *ProjectDao) FindProjectById(ctx context.Context, projectCode int64) (pj *pro.Project, err error) {
+	err = p.conn.Session(ctx).Where("id=?", projectCode).Find(&pj).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return
+}
+
+func (p *ProjectDao) FindProjectMemberByPid(ctx context.Context, projectCode int64) (list []*pro.ProjectMember, total int64, err error) {
+	session := p.conn.Session(ctx)
+	err = session.Model(&pro.ProjectMember{}).
+		Where("project_code=?", projectCode).
+		Find(&list).Error
+	err = session.Model(&pro.ProjectMember{}).
+		Where("project_code=?", projectCode).
+		Count(&total).Error
+	return
+}
+
 func (p *ProjectDao) UpdateProject(ctx context.Context, proj *pro.Project) error {
 	return p.conn.Session(ctx).Updates(&proj).Error
 }
 
-// DeleteProjectCollect 删除项目收藏
 func (p *ProjectDao) DeleteProjectCollect(ctx context.Context, memId int64, projectCode int64) error {
 	return p.conn.Session(ctx).Where("member_code=? and project_code=?", memId, projectCode).Delete(&pro.ProjectCollection{}).Error
 }
 
-// SaveProjectCollect 保存项目收藏
 func (p *ProjectDao) SaveProjectCollect(ctx context.Context, pc *pro.ProjectCollection) error {
+
 	return p.conn.Session(ctx).Save(&pc).Error
 }
 
-// UpdateDeletedProject 更新项目删除状态
 func (p *ProjectDao) UpdateDeletedProject(ctx context.Context, code int64, deleted bool) error {
 	session := p.conn.Session(ctx)
 	var err error
@@ -45,7 +62,6 @@ func (p *ProjectDao) UpdateDeletedProject(ctx context.Context, code int64, delet
 	return err
 }
 
-// FindProjectByPIdAndMemId 根据项目id和成员id查询项目信息
 func (p *ProjectDao) FindProjectByPIdAndMemId(ctx context.Context, projectCode int64, memberId int64) (*pro.ProjectAndMember, error) {
 	var pms *pro.ProjectAndMember
 	session := p.conn.Session(ctx)
@@ -55,7 +71,6 @@ func (p *ProjectDao) FindProjectByPIdAndMemId(ctx context.Context, projectCode i
 	return pms, err
 }
 
-// FindCollectByPidAndMemId 根据项目id和成员id查询是否收藏了项目
 func (p *ProjectDao) FindCollectByPidAndMemId(ctx context.Context, projectCode int64, memberId int64) (bool, error) {
 	var count int64
 	session := p.conn.Session(ctx)
@@ -65,19 +80,16 @@ func (p *ProjectDao) FindCollectByPidAndMemId(ctx context.Context, projectCode i
 	return count > 0, err
 }
 
-// SaveProject 保存项目
 func (p *ProjectDao) SaveProject(conn database.DbConn, ctx context.Context, pr *pro.Project) error {
 	p.conn = conn.(*gorms.GormConn)
 	return p.conn.Tx(ctx).Save(&pr).Error
 }
 
-// SaveProjectMember 保存项目成员
 func (p *ProjectDao) SaveProjectMember(conn database.DbConn, ctx context.Context, pm *pro.ProjectMember) error {
 	p.conn = conn.(*gorms.GormConn)
 	return p.conn.Tx(ctx).Save(&pm).Error
 }
 
-// FindCollectProjectByMemId 根据成员id查询被收藏的项目
 func (p ProjectDao) FindCollectProjectByMemId(ctx context.Context, memberId int64, page int64, size int64) ([]*pro.ProjectAndMember, int64, error) {
 	var pms []*pro.ProjectAndMember
 	session := p.conn.Session(ctx)
@@ -91,7 +103,6 @@ func (p ProjectDao) FindCollectProjectByMemId(ctx context.Context, memberId int6
 	return pms, total, err
 }
 
-// FindProjectByMemId 根据成员id查询项目
 func (p ProjectDao) FindProjectByMemId(ctx context.Context, memId int64, condition string, page int64, size int64) ([]*pro.ProjectAndMember, int64, error) {
 	var pms []*pro.ProjectAndMember
 	session := p.conn.Session(ctx)
@@ -104,4 +115,10 @@ func (p ProjectDao) FindProjectByMemId(ctx context.Context, memId int64, conditi
 	tx := session.Raw(query, memId)
 	err := tx.Scan(&total).Error
 	return pms, total, err
+}
+
+func NewProjectDao() *ProjectDao {
+	return &ProjectDao{
+		conn: gorms.New(),
+	}
 }
