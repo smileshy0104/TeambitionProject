@@ -20,53 +20,75 @@ import (
 	"time"
 )
 
+// TaskService 提供了任务相关的服务功能，继承了 task.UnimplementedTaskServiceServer。
+// 它通过多个数据存储库来管理缓存、事务以及项目、任务等数据。
 type TaskService struct {
-	task.UnimplementedTaskServiceServer
-	cache                  repo.Cache
-	transaction            tran.Transaction
-	projectRepo            repo.ProjectRepo
-	projectTemplateRepo    repo.ProjectTemplateRepo
-	taskStagesTemplateRepo repo.TaskStagesTemplateRepo
-	taskStagesRepo         repo.TaskStagesRepo
-	taskRepo               repo.TaskRepo
+	task.UnimplementedTaskServiceServer                             // 继承自任务服务的未实现服务服务器
+	cache                               repo.Cache                  // 缓存接口，用于快速数据访问
+	transaction                         tran.Transaction            // 事务接口，用于处理数据的一致性和完整性
+	projectRepo                         repo.ProjectRepo            // 项目数据存储库，管理项目相关数据
+	projectTemplateRepo                 repo.ProjectTemplateRepo    // 项目模板数据存储库，管理项目模板数据
+	taskStagesTemplateRepo              repo.TaskStagesTemplateRepo // 任务阶段模板数据存储库，管理任务阶段模板数据
+	taskStagesRepo                      repo.TaskStagesRepo         // 任务阶段数据存储库，管理任务阶段数据
+	taskRepo                            repo.TaskRepo               // 任务数据存储库，管理任务数据
 }
 
+// New 创建并返回一个新的 TaskService 实例。
+// 它初始化了 TaskService 结构体，并注入了必要的数据存储库实例。
 func New() *TaskService {
 	return &TaskService{
-		cache:                  dao.Rc,
-		transaction:            dao.NewTransaction(),
-		projectRepo:            dao.NewProjectDao(),
-		projectTemplateRepo:    dao.NewProjectTemplateDao(),
-		taskStagesTemplateRepo: dao.NewTaskStagesTemplateDao(),
-		taskStagesRepo:         dao.NewTaskStagesDao(),
-		taskRepo:               dao.NewTaskDao(),
+		cache:                  dao.Rc,                         // 使用预定义的缓存实例
+		transaction:            dao.NewTransaction(),           // 创建新的事务实例
+		projectRepo:            dao.NewProjectDao(),            // 创建新的项目数据存储库实例
+		projectTemplateRepo:    dao.NewProjectTemplateDao(),    // 创建新的项目模板数据存储库实例
+		taskStagesTemplateRepo: dao.NewTaskStagesTemplateDao(), // 创建新的任务阶段模板数据存储库实例
+		taskStagesRepo:         dao.NewTaskStagesDao(),         // 创建新的任务阶段数据存储库实例
+		taskRepo:               dao.NewTaskDao(),               // 创建新的任务数据存储库实例
 	}
 }
 
+// TaskStages 获取任务阶段信息
+// 该方法根据项目代码、页码和页面大小获取任务阶段信息
 func (t *TaskService) TaskStages(co context.Context, msg *task.TaskReqMessage) (*task.TaskStagesResponse, error) {
+	// 解密项目代码
 	projectCode := encrypts.DecryptNoErr(msg.ProjectCode)
+	// 获取页码和页面大小
 	page := msg.Page
 	pageSize := msg.PageSize
+	// 创建一个带有超时的上下文，以防止操作无限期阻塞
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+
+	// 调用存储库方法获取任务阶段信息
 	stages, total, err := t.taskStagesRepo.FindStagesByProjectId(ctx, projectCode, page, pageSize)
 	if err != nil {
+		// 如果发生错误，记录错误信息并返回通用的 gRPC 错误
 		zap.L().Error("project SaveProject taskStagesRepo.FindStagesByProjectId error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
 
+	// 初始化任务阶段消息列表并进行数据复制
 	var tsMessages []*task.TaskStagesMessage
 	copier.Copy(&tsMessages, stages)
+	// 如果列表为空，直接返回空列表和总数 0
 	if tsMessages == nil {
 		return &task.TaskStagesResponse{List: tsMessages, Total: 0}, nil
 	}
+
+	// 将阶段信息转换为映射格式
 	stagesMap := data.ToTaskStagesMap(stages)
+	// 遍历任务阶段消息列表，填充详细信息
 	for _, v := range tsMessages {
 		taskStages := stagesMap[int(v.Id)]
+		// 加密任务阶段 ID
 		v.Code = encrypts.EncryptNoErr(int64(v.Id))
+		// 格式化创建时间
 		v.CreateTime = tms.FormatByMill(taskStages.CreateTime)
+		// 设置项目代码
 		v.ProjectCode = msg.ProjectCode
 	}
+
+	// 返回包含任务阶段列表和总数的响应对象
 	return &task.TaskStagesResponse{List: tsMessages, Total: total}, nil
 }
 

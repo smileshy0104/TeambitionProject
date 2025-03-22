@@ -23,11 +23,20 @@ var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09
 
 const AESKey = "sdfgyrhgbxcdgryfhgywertd"
 
+// DecryptNoErr 解密字符串，不返回错误。
+// 参数 cipherStr 是经过加密的字符串。
+// 返回值是解密后的 int64 类型数据。
+// 该函数忽略了可能发生的错误，适用于可以接受解密失败的场景。
 func DecryptNoErr(cipherStr string) int64 {
 	decrypt, _ := Decrypt(cipherStr, AESKey)
 	parseInt, _ := strconv.ParseInt(decrypt, 10, 64)
 	return parseInt
 }
+
+// EncryptNoErr 加密 int64 类型的 ID，不返回错误。
+// 参数 id 是待加密的 int64 类型数据。
+// 返回值是加密后的字符串。
+// 该函数忽略了可能发生的错误，适用于可以接受加密失败的场景。
 func EncryptNoErr(id int64) string {
 	str, _ := EncryptInt64(id, AESKey)
 	return str

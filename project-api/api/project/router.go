@@ -36,7 +36,7 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group.POST("/project/edit", h.editProject)               // editProject 编辑项目请求
 
 	t := NewTask()
-	group.POST("/task_stages", t.taskStages)
+	group.POST("/task_stages", t.taskStages) // taskStages 查找对应的任务阶段列表。
 	group.POST("/project_member/index", t.memberProjectList)
 	group.POST("/task_stages/tasks", t.taskList)
 	group.POST("/task/save", t.saveTask)
