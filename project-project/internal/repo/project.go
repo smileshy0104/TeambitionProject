@@ -25,7 +25,7 @@ type ProjectRepo interface {
 	SaveProjectCollect(ctx context.Context, pc *pro.ProjectCollection) error
 	// 删除项目收藏
 	DeleteProjectCollect(ctx context.Context, memId int64, projectCode int64) error
-	//
+	// 更新项目
 	UpdateProject(ctx context.Context, proj *pro.Project) error
 }
 
