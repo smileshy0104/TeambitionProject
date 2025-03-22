@@ -147,49 +147,68 @@ func (t *TaskService) MemberProjectList(co context.Context, msg *task.TaskReqMes
 	return &task.MemberProjectResponse{List: list, Total: total}, nil
 }
 
+// TaskList 查询任务列表
+// 该方法根据阶段代码查询任务，并处理任务的隐私设置及成员信息
 func (t *TaskService) TaskList(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskListResponse, error) {
+	// 解密阶段代码
 	stageCode := encrypts.DecryptNoErr(msg.StageCode)
+	// 创建一个带有超时的上下文，以防止长时间运行的任务导致服务阻塞
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 根据阶段代码查询任务列表
 	taskList, err := t.taskRepo.FindTaskByStageCode(c, int(stageCode))
 	if err != nil {
+		// 记录错误日志，并返回数据库错误
 		zap.L().Error("project task TaskList FindTaskByStageCode error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
+	// 初始化任务显示列表和成员ID列表
 	var taskDisplayList []*data.TaskDisplay
 	var mIds []int64
+	// 遍历任务列表，处理每个任务
 	for _, v := range taskList {
+		// 将任务转换为显示格式
 		display := v.ToTaskDisplay()
+		// 如果任务是私有的，检查当前用户是否有权限查看
 		if v.Private == 1 {
-			//代表隐私模式
+			// 查询任务成员信息
 			taskMember, err := t.taskRepo.FindTaskMemberByTaskId(ctx, v.Id, msg.MemberId)
 			if err != nil {
+				// 记录错误日志，并返回数据库错误
 				zap.L().Error("project task TaskList taskRepo.FindTaskMemberByTaskId error", zap.Error(err))
 				return nil, errs.GrpcError(model.DBError)
 			}
+			// 根据查询结果设置任务的可读状态
 			if taskMember != nil {
 				display.CanRead = model.CanRead
 			} else {
 				display.CanRead = model.NoCanRead
 			}
 		}
+		// 将处理后的任务添加到显示列表中
 		taskDisplayList = append(taskDisplayList, display)
+		// 添加任务分配给的成员ID到成员ID列表中
 		mIds = append(mIds, v.AssignTo)
 	}
+	// 如果成员ID列表为空，直接返回空的列表响应
 	if mIds == nil || len(mIds) <= 0 {
 		return &task.TaskListResponse{List: nil}, nil
 	}
-	// in ()
+	// 查询成员信息
 	messageList, err := rpc.LoginServiceClient.FindMemInfoByIds(ctx, &login.UserMessage{MIds: mIds})
 	if err != nil {
+		// 记录错误日志，并返回查询成员信息时遇到的错误
 		zap.L().Error("project task TaskList LoginServiceClient.FindMemInfoByIds error", zap.Error(err))
 		return nil, err
 	}
+	// 将查询到的成员信息存储到映射中，以便后续快速查找
 	memberMap := make(map[int64]*login.MemberMessage)
 	for _, v := range messageList.List {
 		memberMap[v.Id] = v
 	}
+	// 为每个任务设置执行人信息
 	for _, v := range taskDisplayList {
+		// 从成员信息映射中获取执行人信息
 		message := memberMap[encrypts.DecryptNoErr(v.AssignTo)]
 		e := data.Executor{
 			Name:   message.Name,
@@ -197,10 +216,14 @@ func (t *TaskService) TaskList(ctx context.Context, msg *task.TaskReqMessage) (*
 		}
 		v.Executor = e
 	}
+	// 初始化任务消息列表，并将任务显示列表复制到任务消息列表中
 	var taskMessageList []*task.TaskMessage
 	copier.Copy(&taskMessageList, taskDisplayList)
+	// 返回任务列表响应
 	return &task.TaskListResponse{List: taskMessageList}, nil
 }
+
+// SaveTask 保存任务信息，包括任务的基本信息、分配信息等。
 func (t *TaskService) SaveTask(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskMessage, error) {
 	//1. 检查业务逻辑
 	if msg.Name == "" {
@@ -216,6 +239,7 @@ func (t *TaskService) SaveTask(ctx context.Context, msg *task.TaskReqMessage) (*
 		return nil, errs.GrpcError(model.TaskStagesNotNull)
 	}
 	projectCode := encrypts.DecryptNoErr(msg.ProjectCode)
+	// 查询项目信息
 	project, err := t.projectRepo.FindProjectById(ctx, projectCode)
 	if err != nil {
 		zap.L().Error("project task SaveTask projectRepo.FindProjectById error", zap.Error(err))
@@ -224,6 +248,7 @@ func (t *TaskService) SaveTask(ctx context.Context, msg *task.TaskReqMessage) (*
 	if project == nil || project.Deleted == model.Deleted {
 		return nil, errs.GrpcError(model.ProjectAlreadyDeleted)
 	}
+	// 查询当前项目下的最大任务编号和最大任务排序号
 	maxIdNum, err := t.taskRepo.FindTaskMaxIdNum(ctx, projectCode)
 	if err != nil {
 		zap.L().Error("project task SaveTask taskRepo.FindTaskMaxIdNum error", zap.Error(err))
@@ -233,6 +258,7 @@ func (t *TaskService) SaveTask(ctx context.Context, msg *task.TaskReqMessage) (*
 		a := 0
 		maxIdNum = &a
 	}
+	// 查询当前阶段下的最大任务排序号
 	maxSort, err := t.taskRepo.FindTaskSort(ctx, projectCode, stageCode)
 	if err != nil {
 		zap.L().Error("project task SaveTask taskRepo.FindTaskSort error", zap.Error(err))
@@ -297,44 +323,55 @@ func (t *TaskService) SaveTask(ctx context.Context, msg *task.TaskReqMessage) (*
 	copier.Copy(tm, display)
 	return tm, nil
 }
+
+// TaskSort 负责处理任务排序请求。
+// 该函数接收一个上下文和一个任务请求消息，然后根据消息中的信息对任务进行排序。
 func (t *TaskService) TaskSort(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskSortResponse, error) {
-	//移动的任务id肯定有 preTaskCode
+	// 解密前置任务代码和目标阶段代码，以获取实际的任务和阶段标识。
 	preTaskCode := encrypts.DecryptNoErr(msg.PreTaskCode)
 	toStageCode := encrypts.DecryptNoErr(msg.ToStageCode)
+
+	// 如果前置任务代码和下一任务代码相同，则无需进行任何操作，直接返回空响应。
 	if msg.PreTaskCode == msg.NextTaskCode {
 		return &task.TaskSortResponse{}, nil
 	}
+
+	// 调用sortTask方法进行任务排序，如果排序失败，则返回相应的错误。
 	err := t.sortTask(preTaskCode, msg.NextTaskCode, toStageCode)
 	if err != nil {
 		return nil, err
 	}
-	return &task.TaskSortResponse{}, nil
 
+	// 如果排序成功，返回空响应对象。
+	return &task.TaskSortResponse{}, nil
 }
 
+// sortTask 对任务进行排序，根据指定的前一个任务和目标阶段重新安排任务的顺序。
 func (t *TaskService) sortTask(preTaskCode int64, nextTaskCode string, toStageCode int64) error {
-	//1. 从小到大排
-	//2. 原有的顺序  比如 1 2 3 4 5 4排到2前面去 4的序号在1和2 之间 如果4是最后一个 保证 4比所有的序号都打 如果 排到第一位 直接置为0
-
+	// 创建一个带有超时的context，以防止排序操作无限期地执行。
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+
+	// 查找前一个任务，以便获取其排序信息。
 	ts, err := t.taskRepo.FindTaskById(c, preTaskCode)
 	if err != nil {
 		zap.L().Error("project task TaskSort taskRepo.FindTaskById error", zap.Error(err))
 		return errs.GrpcError(model.DBError)
 	}
+
+	// 使用事务来确保排序操作的原子性。
 	err = t.transaction.Action(func(conn database.DbConn) error {
-		//如果相等是不需要进行改变的
+		// 如果任务已经处于正确的位置，则无需进行任何操作。
 		ts.StageCode = int(toStageCode)
 		if nextTaskCode != "" {
-			//意味着要进行排序的替换
+			// 解密nextTaskCode以获取实际的任务代码。
 			nextTaskCode := encrypts.DecryptNoErr(nextTaskCode)
 			next, err := t.taskRepo.FindTaskById(c, nextTaskCode)
 			if err != nil {
 				zap.L().Error("project task TaskSort taskRepo.FindTaskById error", zap.Error(err))
 				return errs.GrpcError(model.DBError)
 			}
-			// next.Sort 要找到比它小的那个任务
+			// 查找比next任务排序值小的最大任务，以便插入ts任务。
 			prepre, err := t.taskRepo.FindTaskByStageCodeLtSort(c, next.StageCode, next.Sort)
 			if err != nil {
 				zap.L().Error("project task TaskSort taskRepo.FindTaskByStageCodeLtSort error", zap.Error(err))
@@ -346,15 +383,8 @@ func (t *TaskService) sortTask(preTaskCode int64, nextTaskCode string, toStageCo
 			if prepre == nil {
 				ts.Sort = 0
 			}
-			//sort := ts.Sort
-			//ts.Sort = next.Sort
-			//next.Sort = sort
-			//err = t.taskRepo.UpdateTaskSort(c, conn, next)
-			//if err != nil {
-			//	zap.L().Error("project task TaskSort taskRepo.UpdateTaskSort error", zap.Error(err))
-			//	return errs.GrpcError(model.DBError)
-			//}
 		} else {
+			// 如果没有下一个任务代码，将任务排序到阶段的末尾。
 			maxSort, err := t.taskRepo.FindTaskSort(c, ts.ProjectCode, int64(ts.StageCode))
 			if err != nil {
 				zap.L().Error("project task TaskSort taskRepo.FindTaskSort error", zap.Error(err))
@@ -366,15 +396,17 @@ func (t *TaskService) sortTask(preTaskCode int64, nextTaskCode string, toStageCo
 			}
 			ts.Sort = *maxSort + 65536
 		}
+		// 如果排序值小于50，重置排序值以避免过小的排序值。
 		if ts.Sort < 50 {
-			//重置排序
 			err = t.resetSort(toStageCode)
 			if err != nil {
 				zap.L().Error("project task TaskSort resetSort error", zap.Error(err))
 				return errs.GrpcError(model.DBError)
 			}
+			// 递归调用sortTask以重新尝试排序。
 			return t.sortTask(preTaskCode, nextTaskCode, toStageCode)
 		}
+		// 更新任务的排序值。
 		err = t.taskRepo.UpdateTaskSort(c, conn, ts)
 		if err != nil {
 			zap.L().Error("project task TaskSort taskRepo.UpdateTaskSort error", zap.Error(err))
@@ -385,28 +417,39 @@ func (t *TaskService) sortTask(preTaskCode int64, nextTaskCode string, toStageCo
 	return err
 }
 
+// resetSort 重置指定阶段的任务排序
+// 参数 stageCode: 阶段代码
+// 返回 error: 错误信息，如果有的话
 func (t *TaskService) resetSort(stageCode int64) error {
+	// 获取指定阶段的任务列表
 	list, err := t.taskRepo.FindTaskByStageCode(context.Background(), int(stageCode))
 	if err != nil {
 		return err
 	}
+	// 通过事务更新任务排序
 	return t.transaction.Action(func(conn database.DbConn) error {
 		iSort := 65536
 		for index, v := range list {
 			v.Sort = (index + 1) * iSort
+			// 更新数据库中任务的排序值
 			return t.taskRepo.UpdateTaskSort(context.Background(), conn, v)
 		}
 		return nil
 	})
-
 }
 
+// MyTaskList 获取我的任务列表
+// 参数 ctx: 上下文
+// 参数 msg: 任务请求消息，包含任务类型、成员ID、页码和页面大小
+// 返回 MyTaskListResponse: 任务列表响应，包含任务列表和总任务数
+// 返回 error: 错误信息，如果有的话
 func (t *TaskService) MyTaskList(ctx context.Context, msg *task.TaskReqMessage) (*task.MyTaskListResponse, error) {
 	var tsList []*data.Task
 	var err error
 	var total int64
+	// 根据任务类型获取任务列表
 	if msg.TaskType == 1 {
-		//我执行的
+		// 我执行的任务
 		tsList, total, err = t.taskRepo.FindTaskByAssignTo(ctx, msg.MemberId, int(msg.Type), msg.Page, msg.PageSize)
 		if err != nil {
 			zap.L().Error("project task MyTaskList taskRepo.FindTaskByAssignTo error", zap.Error(err))
@@ -414,7 +457,7 @@ func (t *TaskService) MyTaskList(ctx context.Context, msg *task.TaskReqMessage) 
 		}
 	}
 	if msg.TaskType == 2 {
-		//我参与的
+		// 我参与的任务
 		tsList, total, err = t.taskRepo.FindTaskByMemberCode(ctx, msg.MemberId, int(msg.Type), msg.Page, msg.PageSize)
 		if err != nil {
 			zap.L().Error("project task MyTaskList taskRepo.FindTaskByMemberCode error", zap.Error(err))
@@ -422,25 +465,29 @@ func (t *TaskService) MyTaskList(ctx context.Context, msg *task.TaskReqMessage) 
 		}
 	}
 	if msg.TaskType == 3 {
-		//我创建的
+		// 我创建的任务
 		tsList, total, err = t.taskRepo.FindTaskByCreateBy(ctx, msg.MemberId, int(msg.Type), msg.Page, msg.PageSize)
 		if err != nil {
 			zap.L().Error("project task MyTaskList taskRepo.FindTaskByCreateBy error", zap.Error(err))
 			return nil, errs.GrpcError(model.DBError)
 		}
 	}
+	// 如果没有找到任务，返回空列表和总任务数0
 	if tsList == nil || len(tsList) <= 0 {
 		return &task.MyTaskListResponse{List: nil, Total: 0}, nil
 	}
 	var pids []int64
 	var mids []int64
+	// 收集任务列表中的项目ID和分配给的成员ID
 	for _, v := range tsList {
 		pids = append(pids, v.ProjectCode)
 		mids = append(mids, v.AssignTo)
 	}
+	// 获取项目信息
 	pList, err := t.projectRepo.FindProjectByIds(ctx, pids)
 	projectMap := pro.ToProjectMap(pList)
 
+	// 获取成员信息
 	mList, err := rpc.LoginServiceClient.FindMemInfoByIds(ctx, &login.UserMessage{
 		MIds: mids,
 	})
@@ -449,6 +496,7 @@ func (t *TaskService) MyTaskList(ctx context.Context, msg *task.TaskReqMessage) 
 		mMap[v.Id] = v
 	}
 	var mtdList []*data.MyTaskDisplay
+	// 构建我的任务显示列表
 	for _, v := range tsList {
 		memberMessage := mMap[v.AssignTo]
 		name := memberMessage.Name
@@ -457,6 +505,7 @@ func (t *TaskService) MyTaskList(ctx context.Context, msg *task.TaskReqMessage) 
 		mtdList = append(mtdList, mtd)
 	}
 	var myMsgs []*task.MyTaskMessage
+	// 复制我的任务显示列表到响应消息
 	copier.Copy(&myMsgs, mtdList)
 	return &task.MyTaskListResponse{List: myMsgs, Total: total}, nil
 }
