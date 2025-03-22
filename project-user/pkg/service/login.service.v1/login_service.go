@@ -2,6 +2,7 @@ package login_service_v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/jinzhu/copier"
@@ -199,7 +200,8 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 	memMsg := &login.MemberMessage{}
 	err = copier.Copy(memMsg, mem)
 	memMsg.Code, _ = encrypts.EncryptInt64(mem.Id, model.AESKey)
-
+	memMsg.LastLoginTime = tms.FormatByMill(mem.LastLoginTime)
+	memMsg.CreateTime = tms.FormatByMill(mem.CreateTime)
 	// 2. 根据用户id查组织
 	// 调用组织仓库的FindOrganizationByMemId方法，根据成员ID查询其所属的组织信息
 	orgs, err := ls.organizationRepo.FindOrganizationByMemId(c, mem.Id)
@@ -236,7 +238,13 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 		AccessTokenExp: token.AccessExp,
 		TokenType:      "bearer",
 	}
-
+	//TODO 放入缓存 member orgs
+	go func() {
+		marshal, _ := json.Marshal(mem)
+		ls.cache.Put(c, model.Member+"::"+memIdStr, string(marshal), exp)
+		orgsJson, _ := json.Marshal(orgs)
+		ls.cache.Put(c, model.MemberOrganization+"::"+memIdStr, string(orgsJson), exp)
+	}()
 	// 返回登录响应，包括成员信息、组织信息和令牌信息
 	return &login.LoginResponse{
 		Member:           memMsg,
@@ -245,11 +253,11 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 	}, nil
 }
 
-// TokenVerify 验证用户登录状态
+// TokenVerifyOld 验证用户登录状态（未存入队列）
 // 该方法接收一个LoginMessage，其中包含用户提供的token信息
 // 它会解析token，验证其有效性，并从数据库中获取用户信息
 // 如果验证成功，返回包含用户信息的LoginResponse；如果失败，返回错误
-func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
+func (ls *LoginService) TokenVerifyOld(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
 	// 提取token信息，并处理带有bearer前缀的token
 	token := msg.Token
 	if strings.Contains(token, "bearer") {
@@ -291,6 +299,64 @@ func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage
 	}
 	memMsg.CreateTime = tms.FormatByMill(memberById.CreateTime)
 	// 返回包含用户信息的登录响应
+	return &login.LoginResponse{Member: memMsg}, nil
+}
+
+// TokenVerify 验证用户登录状态（将token存入对应队列）
+// 该方法主要负责解析用户提供的Token，验证其有效性，并从缓存中获取用户信息和组织信息
+// 如果验证成功，返回用户相关信息；如果验证失败或信息过期，返回登录错误
+func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
+	// 提取Token，并处理带有bearer前缀的Token
+	token := msg.Token
+	if strings.Contains(token, "bearer") {
+		token = strings.ReplaceAll(token, "bearer ", "")
+	}
+
+	// 解析Token，如果解析失败，记录错误日志并返回登录错误
+	parseToken, err := jwts.ParseToken(token, config.C.JwtConfig.AccessSecret)
+	if err != nil {
+		zap.L().Error("Login  TokenVerify error", zap.Error(err))
+		return nil, errs.GrpcError(model.NoLogin)
+	}
+
+	// 从缓存中查询用户信息，如果查询失败或信息为空，记录错误日志并返回登录错误
+	memJson, err := ls.cache.Get(context.Background(), model.Member+"::"+parseToken)
+	if err != nil {
+		zap.L().Error("TokenVerify cache get member error", zap.Error(err))
+		return nil, errs.GrpcError(model.NoLogin)
+	}
+	if memJson == "" {
+		zap.L().Error("TokenVerify cache get member expire")
+		return nil, errs.GrpcError(model.NoLogin)
+	}
+
+	// 解析缓存中的用户信息，并准备返回的用户数据
+	memberById := &member.Member{}
+	json.Unmarshal([]byte(memJson), memberById)
+	memMsg := &login.MemberMessage{}
+	copier.Copy(memMsg, memberById)
+	memMsg.Code, _ = encrypts.EncryptInt64(memberById.Id, model.AESKey)
+
+	// 从缓存中查询用户组织信息，如果查询失败或信息为空，记录错误日志并返回登录错误
+	orgsJson, err := ls.cache.Get(context.Background(), model.MemberOrganization+"::"+parseToken)
+	if err != nil {
+		zap.L().Error("TokenVerify cache get organization error", zap.Error(err))
+		return nil, errs.GrpcError(model.NoLogin)
+	}
+	if orgsJson == "" {
+		zap.L().Error("TokenVerify cache get organization expire")
+		return nil, errs.GrpcError(model.NoLogin)
+	}
+
+	// 解析缓存中的组织信息，并将其与用户信息关联
+	var orgs []*organization.Organization
+	json.Unmarshal([]byte(orgsJson), &orgs)
+	if len(orgs) > 0 {
+		memMsg.OrganizationCode, _ = encrypts.EncryptInt64(orgs[0].Id, model.AESKey)
+	}
+
+	// 格式化用户创建时间，并返回包含用户信息的登录响应
+	memMsg.CreateTime = tms.FormatByMill(memberById.CreateTime)
 	return &login.LoginResponse{Member: memMsg}, nil
 }
 
