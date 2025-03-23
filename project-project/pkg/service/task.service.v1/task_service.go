@@ -670,12 +670,14 @@ func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*t
 	return &task.TaskLogList{List: l, Total: total}, nil
 }
 
+// TaskWorkTimeList 获取任务工时
 func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskWorkTimeResponse, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	var list []*data.TaskWorkTime
+	var list []*dataNew.TaskWorkTime
 	var err error
+	// FindWorkTimeList 查询任务工时
 	list, err = t.taskWorkTimeRepo.FindWorkTimeList(c, taskCode)
 	if err != nil {
 		zap.L().Error("project task TaskWorkTimeList taskWorkTimeRepo.FindWorkTimeList error", zap.Error(err))
@@ -684,20 +686,24 @@ func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMes
 	if len(list) == 0 {
 		return &task.TaskWorkTimeResponse{}, nil
 	}
-	var displayList []*data.TaskWorkTimeDisplay
+	var displayList []*dataNew.TaskWorkTimeDisplay
 	var mIdList []int64
+	// 遍历任务工时列表，将memberCode添加到mIdList切片中
 	for _, v := range list {
 		mIdList = append(mIdList, v.MemberCode)
 	}
+	// 通过成员ids查询成员信息
 	messageList, err := rpc.LoginServiceClient.FindMemInfoByIds(c, &login.UserMessage{MIds: mIdList})
 	mMap := make(map[int64]*login.MemberMessage)
+	// 遍历成员信息列表，将成员信息添加到mMap中
 	for _, v := range messageList.List {
 		mMap[v.Id] = v
 	}
+	// 遍历任务工时列表，构建TaskWorkTimeDisplay对象
 	for _, v := range list {
 		display := v.ToDisplay()
 		message := mMap[v.MemberCode]
-		m := data.Member{}
+		m := dataNew.Member{}
 		m.Name = message.Name
 		m.Id = message.Id
 		m.Avatar = message.Avatar
@@ -709,8 +715,10 @@ func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMes
 	copier.Copy(&l, displayList)
 	return &task.TaskWorkTimeResponse{List: l, Total: int64(len(l))}, nil
 }
+
+// SaveTaskWorkTime 保存任务工时
 func (t *TaskService) SaveTaskWorkTime(ctx context.Context, msg *task.TaskReqMessage) (*task.SaveTaskWorkTimeResponse, error) {
-	tmt := &data.TaskWorkTime{}
+	tmt := &dataNew.TaskWorkTime{}
 	tmt.BeginTime = msg.BeginTime
 	tmt.Num = int(msg.Num)
 	tmt.Content = msg.Content
@@ -718,6 +726,7 @@ func (t *TaskService) SaveTaskWorkTime(ctx context.Context, msg *task.TaskReqMes
 	tmt.MemberCode = msg.MemberId
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 调用 TaskWorkTimeRepo 的 Save 方法保存任务工时。
 	err := t.taskWorkTimeRepo.Save(c, tmt)
 	if err != nil {
 		zap.L().Error("project task SaveTaskWorkTime taskWorkTimeRepo.Save error", zap.Error(err))
@@ -726,10 +735,11 @@ func (t *TaskService) SaveTaskWorkTime(ctx context.Context, msg *task.TaskReqMes
 	return &task.SaveTaskWorkTimeResponse{}, nil
 }
 
+// SaveTaskFile 保存任务文件
 func (t *TaskService) SaveTaskFile(ctx context.Context, msg *task.TaskFileReqMessage) (*task.TaskFileResponse, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
 	//存file表
-	f := &data.File{
+	f := &dataNew.File{
 		PathName:         msg.PathName,
 		Title:            msg.FileName,
 		Extension:        msg.Extension,
@@ -747,13 +757,14 @@ func (t *TaskService) SaveTaskFile(ctx context.Context, msg *task.TaskFileReqMes
 		FileUrl:          msg.FileUrl,
 		DeletedTime:      0,
 	}
+	// 调用 FileRepo 的 Save 方法保存文件。
 	err := t.fileRepo.Save(context.Background(), f)
 	if err != nil {
 		zap.L().Error("project task SaveTaskFile fileRepo.Save error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	//存入source_link
-	sl := &data.SourceLink{
+	//存入source_link（关联文件数据）
+	sl := &dataNew.SourceLink{
 		SourceType:       "file",
 		SourceCode:       f.Id,
 		LinkType:         "task",
@@ -763,6 +774,7 @@ func (t *TaskService) SaveTaskFile(ctx context.Context, msg *task.TaskFileReqMes
 		CreateTime:       time.Now().UnixMilli(),
 		Sort:             0,
 	}
+	// 调用 SourceLinkRepo 的 Save 方法保存关联文件数据。
 	err = t.sourceLinkRepo.Save(context.Background(), sl)
 	if err != nil {
 		zap.L().Error("project task SaveTaskFile sourceLinkRepo.Save error", zap.Error(err))

@@ -12,6 +12,7 @@ import (
 	"project-api/pkg/model/tasks"
 	common "project-common"
 	"project-common/errs"
+	"project-common/fs"
 	"project-common/tms"
 	"project-grpc/task"
 	"time"
@@ -384,6 +385,7 @@ func (t *HandlerTask) taskLog(c *gin.Context) {
 	}))
 }
 
+// taskWorkTimeList 获取任务工时列表。
 func (t *HandlerTask) taskWorkTimeList(c *gin.Context) {
 	taskCode := c.PostForm("taskCode")
 	result := &common.Result{}
@@ -393,11 +395,13 @@ func (t *HandlerTask) taskWorkTimeList(c *gin.Context) {
 		TaskCode: taskCode,
 		MemberId: c.GetInt64("memberId"),
 	}
+	// 调用 TaskServiceClient 的 TaskWorkTimeList 方法获取任务工时列表。
 	taskWorkTimeResponse, err := TaskServiceClient.TaskWorkTimeList(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
 		c.JSON(http.StatusOK, result.Fail(code, msg))
 	}
+	// 将任务工时列表复制到任务工时显示对象中。
 	var tms []*model.TaskWorkTime
 	copier.Copy(&tms, taskWorkTimeResponse.List)
 	if tms == nil {
@@ -406,12 +410,14 @@ func (t *HandlerTask) taskWorkTimeList(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Success(tms))
 }
 
+// saveTaskWorkTime 保存任务工时。
 func (t *HandlerTask) saveTaskWorkTime(c *gin.Context) {
 	result := &common.Result{}
 	var req *model.SaveTaskWorkTimeReq
 	c.ShouldBind(&req)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 创建一个任务工时请求消息对象，并设置相关参数。
 	msg := &task.TaskReqMessage{
 		TaskCode:  req.TaskCode,
 		MemberId:  c.GetInt64("memberId"),
@@ -419,6 +425,7 @@ func (t *HandlerTask) saveTaskWorkTime(c *gin.Context) {
 		Num:       int32(req.Num),
 		BeginTime: tms.ParseTime(req.BeginTime),
 	}
+	// 调用 TaskServiceClient 的 SaveTaskWorkTime 方法保存任务工时。
 	_, err := TaskServiceClient.SaveTaskWorkTime(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
@@ -427,8 +434,10 @@ func (t *HandlerTask) saveTaskWorkTime(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Success([]int{}))
 }
 
+// uploadFiles 上传文件。
 func (t *HandlerTask) uploadFiles(c *gin.Context) {
 	result := &common.Result{}
+	// 获取上传文件的参数。
 	req := model.UploadFileReq{}
 	c.ShouldBind(&req)
 	//处理文件
@@ -436,8 +445,8 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 	file := multipartForm.File
 	//假设只上传一个文件
 	uploadFile := file["file"][0]
-	//第一种 没有达成分片的条件
 	key := ""
+	// 第一种 没有达成分片的条件    判断是否是单片上传
 	if req.TotalChunks == 1 {
 		//不分片
 		path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
@@ -446,12 +455,14 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 		}
 		dst := path + "/" + req.Filename
 		key = dst
+		// 保存上传的文件到指定路径。
 		err := c.SaveUploadedFile(uploadFile, dst)
 		if err != nil {
 			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
 			return
 		}
 	}
+	// 第二种 是分片上传
 	if req.TotalChunks > 1 {
 		//分片上传 无非就是先把每次的存储起来 追加就可以了
 		path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
@@ -459,22 +470,26 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 			os.MkdirAll(path, os.ModePerm)
 		}
 		fileName := path + "/" + req.Identifier
+		// 打开文件，如果文件不存在则创建文件。
 		openFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
 		if err != nil {
 			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
 			return
 		}
+		// 打开上传的文件。
 		open, err := uploadFile.Open()
 		if err != nil {
 			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
 			return
 		}
 		defer open.Close()
+		// 从上传的文件中读取数据并写入文件。
 		buf := make([]byte, req.CurrentChunkSize)
 		open.Read(buf)
 		openFile.Write(buf)
 		openFile.Close()
 		key = fileName
+		// 如果是最后一个分片，则重命名文件。
 		if req.TotalChunks == req.ChunkNumber {
 			//最后一个分片了
 			newPath := path + "/" + req.Filename
@@ -485,6 +500,7 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 	//调用服务 存入file表
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 创建一个任务文件请求消息对象，并设置相关参数。
 	fileUrl := "http://localhost/" + key
 	msg := &task.TaskFileReqMessage{
 		TaskCode:         req.TaskCode,
@@ -498,6 +514,8 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 		FileType:         file["file"][0].Header.Get("Content-Type"),
 		MemberId:         c.GetInt64("memberId"),
 	}
+	// 如果是最后一个分片，则重命名文件。
+	// 调用 TaskServiceClient 的 SaveTaskFile 方法保存任务文件。
 	if req.TotalChunks == req.ChunkNumber {
 		_, err := TaskServiceClient.SaveTaskFile(ctx, msg)
 		if err != nil {
@@ -515,11 +533,13 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 	}))
 }
 
+// taskSources 获取任务来源。
 func (t *HandlerTask) taskSources(c *gin.Context) {
 	result := &common.Result{}
 	taskCode := c.PostForm("taskCode")
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 调用 TaskServiceClient 的 TaskSources 方法获取任务来源。
 	sources, err := TaskServiceClient.TaskSources(ctx, &task.TaskReqMessage{TaskCode: taskCode})
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
@@ -533,6 +553,7 @@ func (t *HandlerTask) taskSources(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Success(slList))
 }
 
+// createComment 创建评论。
 func (t *HandlerTask) createComment(c *gin.Context) {
 	result := &common.Result{}
 	req := model.CommentReq{}
