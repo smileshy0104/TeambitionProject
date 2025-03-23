@@ -10,6 +10,7 @@ import (
 	"project-grpc/task"
 	"project-grpc/user/login"
 	"project-project/internal/dao"
+	dataNew "project-project/internal/data"
 	"project-project/internal/data/pro"
 	data "project-project/internal/data/task"
 	"project-project/internal/database"
@@ -570,25 +571,31 @@ func (t *TaskService) ReadTask(ctx context.Context, msg *task.TaskReqMessage) (*
 	copier.Copy(taskMessage, display)
 	return taskMessage, nil
 }
+
+// ListTaskMember 获取任务成员列表
 func (t *TaskService) ListTaskMember(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskMemberList, error) {
 	//查询 task member表 根据memberCode去查询用户信息
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 查询任务成员列表
 	taskMemberPage, total, err := t.taskRepo.FindTaskMemberPage(c, taskCode, msg.Page, msg.PageSize)
 	if err != nil {
 		zap.L().Error("project task TaskList taskRepo.FindTaskMemberPage error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
 	var mids []int64
+	// 遍历任务成员列表，将memberCode添加到mids切片中
 	for _, v := range taskMemberPage {
 		mids = append(mids, v.MemberCode)
 	}
+	// 通过成员ids查询成员信息
 	messageList, err := rpc.LoginServiceClient.FindMemInfoByIds(ctx, &login.UserMessage{MIds: mids})
 	mMap := make(map[int64]*login.MemberMessage, len(messageList.List))
 	for _, v := range messageList.List {
 		mMap[v.Id] = v
 	}
+	// 遍历任务成员列表，构建TaskMemberMessage对象
 	var taskMemeberMemssages []*task.TaskMemberMessage
 	for _, v := range taskMemberPage {
 		tm := &task.TaskMemberMessage{}
@@ -603,20 +610,25 @@ func (t *TaskService) ListTaskMember(ctx context.Context, msg *task.TaskReqMessa
 	}
 	return &task.TaskMemberList{List: taskMemeberMemssages, Total: total}, nil
 }
+
+// TaskLog 获取任务日志
 func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskLogList, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
 	all := msg.All
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	var list []*data.ProjectLog
+	// 查询任务日志
+	var list []*dataNew.ProjectLog
 	var total int64
 	var err error
 	if all == 1 {
 		//显示全部
+		// 根据任务编码和评论类型查询任务日志
 		list, total, err = t.projectLogRepo.FindLogByTaskCode(c, taskCode, int(msg.Comment))
 	}
 	if all == 0 {
 		//分页
+		// 根据任务编码和评论类型分页查询任务日志
 		list, total, err = t.projectLogRepo.FindLogByTaskCodePage(c, taskCode, int(msg.Comment), int(msg.Page), int(msg.PageSize))
 	}
 	if err != nil {
@@ -626,20 +638,26 @@ func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*t
 	if total == 0 {
 		return &task.TaskLogList{}, nil
 	}
-	var displayList []*data.ProjectLogDisplay
+	var displayList []*dataNew.ProjectLogDisplay
 	var mIdList []int64
+	// 遍历任务日志列表，将memberCode添加到mIdList切片中
 	for _, v := range list {
 		mIdList = append(mIdList, v.MemberCode)
 	}
+	// 通过成员ids查询成员信息
 	messageList, err := rpc.LoginServiceClient.FindMemInfoByIds(c, &login.UserMessage{MIds: mIdList})
+	// 创建成员信息映射
 	mMap := make(map[int64]*login.MemberMessage)
+	// 遍历成员信息列表，将成员信息添加到mMap中
 	for _, v := range messageList.List {
 		mMap[v.Id] = v
 	}
+	// 遍历任务日志列表，构建TaskLogDisplay对象
 	for _, v := range list {
+		// 获取对应日志信息
 		display := v.ToDisplay()
 		message := mMap[v.MemberCode]
-		m := data.Member{}
+		m := dataNew.Member{}
 		m.Name = message.Name
 		m.Id = message.Id
 		m.Avatar = message.Avatar

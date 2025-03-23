@@ -311,6 +311,7 @@ func (t *HandlerTask) readTask(c *gin.Context) {
 	c.JSON(200, result.Success(td))
 }
 
+// listTaskMember 获取任务成员列表。
 func (t *HandlerTask) listTaskMember(c *gin.Context) {
 	result := &common.Result{}
 	taskCode := c.PostForm("taskCode")
@@ -324,11 +325,13 @@ func (t *HandlerTask) listTaskMember(c *gin.Context) {
 		Page:     page.Page,
 		PageSize: page.PageSize,
 	}
+	// 调用 TaskServiceClient 的 ListTaskMember 方法获取任务成员列表。
 	taskMemberResponse, err := TaskServiceClient.ListTaskMember(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
 		c.JSON(http.StatusOK, result.Fail(code, msg))
 	}
+	// 将任务成员列表复制到任务成员显示对象中。
 	var tms []*tasks.TaskMember
 	copier.Copy(&tms, taskMemberResponse.List)
 	if tms == nil {
@@ -341,6 +344,7 @@ func (t *HandlerTask) listTaskMember(c *gin.Context) {
 	}))
 }
 
+// taskLog 获取任务日志列表。
 func (t *HandlerTask) taskLog(c *gin.Context) {
 	result := &common.Result{}
 	var req *model.TaskLogReq
@@ -353,6 +357,7 @@ func (t *HandlerTask) taskLog(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 创建一个任务日志请求消息对象，并设置相关参数。
 	msg := &task.TaskReqMessage{
 		TaskCode: req.TaskCode,
 		MemberId: c.GetInt64("memberId"),
@@ -361,6 +366,7 @@ func (t *HandlerTask) taskLog(c *gin.Context) {
 		All:      int32(req.All),
 		Comment:  int32(req.Comment),
 	}
+	// 调用 TaskServiceClient 的 TaskLog 方法获取任务日志列表。
 	taskLogResponse, err := TaskServiceClient.TaskLog(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)

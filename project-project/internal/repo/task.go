@@ -72,4 +72,10 @@ type TaskRepo interface {
 
 	// FindTaskByCreateBy 根据创建者的成员代码查找任务
 	FindTaskByCreateBy(ctx context.Context, memberId int64, done int, page int64, size int64) (tList []*task.Task, total int64, err error)
+
+	// FindTaskMemberPage 根据任务代码查找任务成员分页信息
+	FindTaskMemberPage(ctx context.Context, taskCode int64, page int64, size int64) (list []*task.TaskMember, total int64, err error)
+
+	// FindTaskByIds 根据任务ID列表查找任务信息
+	FindTaskByIds(background context.Context, taskIdList []int64) (list []*task.Task, err error)
 }

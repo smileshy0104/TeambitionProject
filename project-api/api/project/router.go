@@ -44,9 +44,9 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group.POST("/task/sort", t.taskSort)                     // taskSort 任务排序。
 	group.POST("/task/selfList", t.myTaskList)               // myTaskList 获取用户自身任务列表请求
 
-	group.POST("/task/read", t.readTask)
-	group.POST("/task_member", t.listTaskMember)
-	group.POST("/task/taskLog", t.taskLog)
+	group.POST("/task/read", t.readTask)         // readTask 读取任务请求
+	group.POST("/task_member", t.listTaskMember) // listTaskMember 查询任务成员列表。
+	group.POST("/task/taskLog", t.taskLog)       // taskLog 查询任务日志列表。
 	group.POST("/task/_taskWorkTimeList", t.taskWorkTimeList)
 	group.POST("/task/saveTaskWorkTime", t.saveTaskWorkTime)
 	group.POST("/file/uploadFiles", t.uploadFiles)

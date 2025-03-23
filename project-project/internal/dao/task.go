@@ -12,6 +12,27 @@ type TaskDao struct {
 	conn *gorms.GormConn
 }
 
+// FindTaskByIds 根据任务ID查询任务
+func (t *TaskDao) FindTaskByIds(background context.Context, taskIdList []int64) (list []*task.Task, err error) {
+	session := t.conn.Session(background)
+	err = session.Model(&task.Task{}).Where("id in (?)", taskIdList).Find(&list).Error
+	return
+}
+
+// FindTaskMemberPage 根据任务ID分页查询任务成员
+func (t *TaskDao) FindTaskMemberPage(ctx context.Context, taskCode int64, page int64, size int64) (list []*task.TaskMember, total int64, err error) {
+	session := t.conn.Session(ctx)
+	offset := (page - 1) * size
+	err = session.Model(&task.TaskMember{}).
+		Where("task_code=?", taskCode).
+		Limit(int(size)).Offset(int(offset)).
+		Find(&list).Error
+	err = session.Model(&task.TaskMember{}).
+		Where("task_code=?", taskCode).
+		Count(&total).Error
+	return
+}
+
 // FindTaskByAssignTo 根据成员ID查询任务
 func (t *TaskDao) FindTaskByAssignTo(ctx context.Context, memberId int64, done int, page int64, size int64) (tsList []*task.Task, total int64, err error) {
 	session := t.conn.Session(ctx)
