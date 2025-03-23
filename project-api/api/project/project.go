@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/copier"
 	"net/http"
 	"project-api/pkg/model"
+	"project-api/pkg/model/menu"
 	"project-api/pkg/model/pro"
 	common "project-common"
 	"project-common/errs"
@@ -43,9 +44,11 @@ func (p *HandlerProject) index(c *gin.Context) {
 		c.JSON(http.StatusOK, result.Fail(code, msg))
 		return
 	}
-
+	menus := indexResponse.Menus
+	var ms []*menu.Menu
+	copier.Copy(&ms, menus)
 	// 如果请求成功，返回成功响应，包含索引数据中的菜单信息。
-	c.JSON(http.StatusOK, result.Success(indexResponse.Menus))
+	c.JSON(http.StatusOK, result.Success(ms))
 }
 
 // myProjectList 获取用户项目列表请求
@@ -321,4 +324,32 @@ func (p *HandlerProject) editProject(c *gin.Context) {
 		c.JSON(http.StatusOK, result.Fail(code, msg))
 	}
 	c.JSON(http.StatusOK, result.Success([]int{}))
+}
+
+// getLogBySelfProject 是一个处理获取当前用户创建的项目日志的函数。
+func (p *HandlerProject) getLogBySelfProject(c *gin.Context) {
+	result := &common.Result{}
+	var page = &model.Page{}
+	page.Bind(c)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	// 创建一个 gRPC 消息，用于传递分页信息。
+	msg := &project.ProjectRpcMessage{
+		MemberId: c.GetInt64("memberId"),
+		Page:     page.Page,
+		PageSize: page.PageSize,
+	}
+	// 调用 gRPC 服务获取当前用户创建的项目日志。
+	projectLogResponse, err := ProjectServiceClient.GetLogBySelfProject(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	// 将获取到的日志列表复制到结果中。
+	var list []*model.ProjectLog
+	copier.Copy(&list, projectLogResponse.List)
+	if list == nil {
+		list = []*model.ProjectLog{}
+	}
+	c.JSON(http.StatusOK, result.Success(list))
 }

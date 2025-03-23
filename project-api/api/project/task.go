@@ -5,11 +5,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"net/http"
+	"os"
+	"path"
 	"project-api/pkg/model"
 	"project-api/pkg/model/pro"
 	"project-api/pkg/model/tasks"
 	common "project-common"
 	"project-common/errs"
+	"project-common/tms"
 	"project-grpc/task"
 	"time"
 )
@@ -276,4 +279,270 @@ func (t *HandlerTask) myTaskList(c *gin.Context) {
 		"list":  myTaskList,
 		"total": myTaskListResponse.Total,
 	}))
+}
+
+// readTask 读取任务详情。
+func (t *HandlerTask) readTask(c *gin.Context) {
+	result := &common.Result{}
+	taskCode := c.PostForm("taskCode")
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	msg := &task.TaskReqMessage{
+		TaskCode: taskCode,
+		MemberId: c.GetInt64("memberId"),
+	}
+	// 调用 TaskServiceClient 的 ReadTask 方法获取任务详情。
+	taskMessage, err := TaskServiceClient.ReadTask(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	// 将任务详情复制到任务显示对象中。
+	td := &tasks.TaskDisplay{}
+	copier.Copy(td, taskMessage)
+	if td != nil {
+		if td.Tags == nil {
+			td.Tags = []int{}
+		}
+		if td.ChildCount == nil {
+			td.ChildCount = []int{}
+		}
+	}
+	c.JSON(200, result.Success(td))
+}
+
+func (t *HandlerTask) listTaskMember(c *gin.Context) {
+	result := &common.Result{}
+	taskCode := c.PostForm("taskCode")
+	page := &model.Page{}
+	page.Bind(c)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	msg := &task.TaskReqMessage{
+		TaskCode: taskCode,
+		MemberId: c.GetInt64("memberId"),
+		Page:     page.Page,
+		PageSize: page.PageSize,
+	}
+	taskMemberResponse, err := TaskServiceClient.ListTaskMember(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	var tms []*tasks.TaskMember
+	copier.Copy(&tms, taskMemberResponse.List)
+	if tms == nil {
+		tms = []*tasks.TaskMember{}
+	}
+	c.JSON(http.StatusOK, result.Success(gin.H{
+		"list":  tms,
+		"total": taskMemberResponse.Total,
+		"page":  page.Page,
+	}))
+}
+
+func (t *HandlerTask) taskLog(c *gin.Context) {
+	result := &common.Result{}
+	var req *model.TaskLogReq
+	c.ShouldBind(&req)
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 10
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	msg := &task.TaskReqMessage{
+		TaskCode: req.TaskCode,
+		MemberId: c.GetInt64("memberId"),
+		Page:     int64(req.Page),
+		PageSize: int64(req.PageSize),
+		All:      int32(req.All),
+		Comment:  int32(req.Comment),
+	}
+	taskLogResponse, err := TaskServiceClient.TaskLog(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	var tms []*model.ProjectLogDisplay
+	copier.Copy(&tms, taskLogResponse.List)
+	if tms == nil {
+		tms = []*model.ProjectLogDisplay{}
+	}
+	c.JSON(http.StatusOK, result.Success(gin.H{
+		"list":  tms,
+		"total": taskLogResponse.Total,
+		"page":  req.Page,
+	}))
+}
+
+func (t *HandlerTask) taskWorkTimeList(c *gin.Context) {
+	taskCode := c.PostForm("taskCode")
+	result := &common.Result{}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	msg := &task.TaskReqMessage{
+		TaskCode: taskCode,
+		MemberId: c.GetInt64("memberId"),
+	}
+	taskWorkTimeResponse, err := TaskServiceClient.TaskWorkTimeList(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	var tms []*model.TaskWorkTime
+	copier.Copy(&tms, taskWorkTimeResponse.List)
+	if tms == nil {
+		tms = []*model.TaskWorkTime{}
+	}
+	c.JSON(http.StatusOK, result.Success(tms))
+}
+
+func (t *HandlerTask) saveTaskWorkTime(c *gin.Context) {
+	result := &common.Result{}
+	var req *model.SaveTaskWorkTimeReq
+	c.ShouldBind(&req)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	msg := &task.TaskReqMessage{
+		TaskCode:  req.TaskCode,
+		MemberId:  c.GetInt64("memberId"),
+		Content:   req.Content,
+		Num:       int32(req.Num),
+		BeginTime: tms.ParseTime(req.BeginTime),
+	}
+	_, err := TaskServiceClient.SaveTaskWorkTime(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	c.JSON(http.StatusOK, result.Success([]int{}))
+}
+
+func (t *HandlerTask) uploadFiles(c *gin.Context) {
+	result := &common.Result{}
+	req := model.UploadFileReq{}
+	c.ShouldBind(&req)
+	//处理文件
+	multipartForm, _ := c.MultipartForm()
+	file := multipartForm.File
+	//假设只上传一个文件
+	uploadFile := file["file"][0]
+	//第一种 没有达成分片的条件
+	key := ""
+	if req.TotalChunks == 1 {
+		//不分片
+		path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
+		if !fs.IsExist(path) {
+			os.MkdirAll(path, os.ModePerm)
+		}
+		dst := path + "/" + req.Filename
+		key = dst
+		err := c.SaveUploadedFile(uploadFile, dst)
+		if err != nil {
+			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+			return
+		}
+	}
+	if req.TotalChunks > 1 {
+		//分片上传 无非就是先把每次的存储起来 追加就可以了
+		path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
+		if !fs.IsExist(path) {
+			os.MkdirAll(path, os.ModePerm)
+		}
+		fileName := path + "/" + req.Identifier
+		openFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+		if err != nil {
+			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+			return
+		}
+		open, err := uploadFile.Open()
+		if err != nil {
+			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+			return
+		}
+		defer open.Close()
+		buf := make([]byte, req.CurrentChunkSize)
+		open.Read(buf)
+		openFile.Write(buf)
+		openFile.Close()
+		key = fileName
+		if req.TotalChunks == req.ChunkNumber {
+			//最后一个分片了
+			newPath := path + "/" + req.Filename
+			key = newPath
+			os.Rename(fileName, newPath)
+		}
+	}
+	//调用服务 存入file表
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	fileUrl := "http://localhost/" + key
+	msg := &task.TaskFileReqMessage{
+		TaskCode:         req.TaskCode,
+		ProjectCode:      req.ProjectCode,
+		OrganizationCode: c.GetString("organizationCode"),
+		PathName:         key,
+		FileName:         req.Filename,
+		Size:             int64(req.TotalSize),
+		Extension:        path.Ext(key),
+		FileUrl:          fileUrl,
+		FileType:         file["file"][0].Header.Get("Content-Type"),
+		MemberId:         c.GetInt64("memberId"),
+	}
+	if req.TotalChunks == req.ChunkNumber {
+		_, err := TaskServiceClient.SaveTaskFile(ctx, msg)
+		if err != nil {
+			code, msg := errs.ParseGrpcError(err)
+			c.JSON(http.StatusOK, result.Fail(code, msg))
+		}
+	}
+
+	c.JSON(http.StatusOK, result.Success(gin.H{
+		"file":        key,
+		"hash":        "",
+		"key":         key,
+		"url":         "http://localhost/" + key,
+		"projectName": req.ProjectName,
+	}))
+}
+
+func (t *HandlerTask) taskSources(c *gin.Context) {
+	result := &common.Result{}
+	taskCode := c.PostForm("taskCode")
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	sources, err := TaskServiceClient.TaskSources(ctx, &task.TaskReqMessage{TaskCode: taskCode})
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	var slList []*model.SourceLink
+	copier.Copy(&slList, sources.List)
+	if slList == nil {
+		slList = []*model.SourceLink{}
+	}
+	c.JSON(http.StatusOK, result.Success(slList))
+}
+
+func (t *HandlerTask) createComment(c *gin.Context) {
+	result := &common.Result{}
+	req := model.CommentReq{}
+	c.ShouldBind(&req)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	msg := &task.TaskReqMessage{
+		TaskCode:       req.TaskCode,
+		CommentContent: req.Comment,
+		Mentions:       req.Mentions,
+		MemberId:       c.GetInt64("memberId"),
+	}
+	_, err := TaskServiceClient.CreateComment(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+	}
+	c.JSON(http.StatusOK, result.Success(true))
 }

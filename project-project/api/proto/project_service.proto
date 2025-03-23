@@ -190,6 +190,24 @@ message UpdateProjectMessage{
   int32 AutoUpdateSchedule = 12; // 新的自动更新进度标志
   int64 MemberId = 13; // 成员ID，表示更新者的ID
 }
+// 项目日志消息，用于表示项目日志
+message ProjectLogMessage{
+  string Content  = 1;
+  string Remark       = 2;
+  string CreateTime    = 3;
+  string SourceCode    = 4;
+  int32 IsComment       = 5;
+  string ProjectCode   = 6;
+  string ProjectName   =7;
+  string MemberAvatar  =8;
+  string MemberName   =9;
+  string TaskName      = 10;
+}
+// 项目日志响应，用于表示项目日志列表和总数量
+message ProjectLogResponse{
+  repeated ProjectLogMessage list = 1;
+  int64 total = 2;
+}
 
 // ProjectService 定义了项目相关的服务接口
 service ProjectService {
@@ -214,4 +232,5 @@ service ProjectService {
   rpc UpdateDeletedProject(ProjectRpcMessage) returns (DeletedProjectResponse){}
   rpc UpdateCollectProject(ProjectRpcMessage) returns (CollectProjectResponse){}
   rpc UpdateProject(UpdateProjectMessage) returns (UpdateProjectResponse){}
+  rpc GetLogBySelfProject(ProjectRpcMessage) returns (ProjectLogResponse){}
 }

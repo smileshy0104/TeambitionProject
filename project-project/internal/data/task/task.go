@@ -16,7 +16,7 @@ type MsTaskStagesTemplate struct {
 }
 
 func (*MsTaskStagesTemplate) TableName() string {
-	return "task_stages_template"
+	return "ms_task_stages_template"
 }
 
 type TaskStagesOnlyName struct {
@@ -153,12 +153,50 @@ type TaskDisplay struct {
 	Code          string
 	CanRead       int
 	Executor      Executor
+	ProjectName   string
+	StageName     string
+	PriText       string
+	StatusText    string
 }
 
 type Executor struct {
 	Name   string
 	Avatar string
 	Code   string
+}
+
+const (
+	NoStarted = iota
+	Started
+)
+const (
+	Normal = iota
+	Urgent
+	VeryUrgent
+)
+
+func (t *Task) GetStatusStr() string {
+	status := t.Status
+	if status == NoStarted {
+		return "未开始"
+	}
+	if status == Started {
+		return "开始"
+	}
+	return ""
+}
+func (t *Task) GetPriStr() string {
+	status := t.Pri
+	if status == Normal {
+		return "普通"
+	}
+	if status == Urgent {
+		return "紧急"
+	}
+	if status == VeryUrgent {
+		return "非常紧急"
+	}
+	return ""
 }
 
 func (t *Task) ToTaskDisplay() *TaskDisplay {
@@ -181,6 +219,8 @@ func (t *Task) ToTaskDisplay() *TaskDisplay {
 	td.ExecuteStatus = t.GetExecuteStatusStr()
 	td.Code = encrypts.EncryptNoErr(t.Id)
 	td.CanRead = 1
+	td.StatusText = t.GetStatusStr()
+	td.PriText = t.GetPriStr()
 	return td
 }
 
