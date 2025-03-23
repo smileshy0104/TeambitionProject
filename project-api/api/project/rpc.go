@@ -8,6 +8,9 @@ import (
 	"project-api/config"
 	"project-common/discovery"
 	"project-common/logs"
+	"project-grpc/account"
+	"project-grpc/auth"
+	"project-grpc/department"
 	"project-grpc/project"
 	"project-grpc/task"
 )
@@ -16,6 +19,9 @@ import (
 // 该客户端通过 InitRpcProjectClient 函数初始化，并在整个应用中使用。
 var ProjectServiceClient project.ProjectServiceClient
 var TaskServiceClient task.TaskServiceClient
+var AccountServiceClient account.AccountServiceClient
+var DepartmentServiceClient department.DepartmentServiceClient
+var AuthServiceClient auth.AuthServiceClient
 
 // InitRpcProjectClient 初始化项目服务的 gRPC 客户端。
 // 该函数通过以下步骤完成初始化：
@@ -39,4 +45,7 @@ func InitRpcProjectClient() {
 	// 使用已建立的 gRPC 连接创建项目服务的客户端实例。
 	ProjectServiceClient = project.NewProjectServiceClient(conn)
 	TaskServiceClient = task.NewTaskServiceClient(conn)
+	AccountServiceClient = account.NewAccountServiceClient(conn)
+	DepartmentServiceClient = department.NewDepartmentServiceClient(conn)
+	AuthServiceClient = auth.NewAuthServiceClient(conn)
 }

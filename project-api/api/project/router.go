@@ -49,7 +49,16 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group.POST("/task/taskLog", t.taskLog)                    // taskLog 查询任务日志列表。
 	group.POST("/task/_taskWorkTimeList", t.taskWorkTimeList) // taskWorkTimeList 查询任务工时列表。
 	group.POST("/task/saveTaskWorkTime", t.saveTaskWorkTime)  // saveTaskWorkTime 保存任务工时。
-	group.POST("/file/uploadFiles", t.uploadFiles)
-	group.POST("/task/taskSources", t.taskSources)
-	group.POST("/task/createComment", t.createComment)
+	group.POST("/file/uploadFiles", t.uploadFiles)            // uploadFiles 上传文件。
+	group.POST("/task/taskSources", t.taskSources)            // taskSources 查询任务来源列表。
+	group.POST("/task/createComment", t.createComment)        // createComment 创建评论。
+
+	a := NewAccount()
+	group.POST("/account", a.account)
+	d := NewDepartment()
+	group.POST("/department", d.department)
+	group.POST("/department/save", d.save)
+	group.POST("/department/read", d.read)
+	auth := NewAuth()
+	group.POST("/auth", auth.authList)
 }
