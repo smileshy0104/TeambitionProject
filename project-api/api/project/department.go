@@ -28,6 +28,7 @@ func (d *HandlerDepartment) department(c *gin.Context) {
 		ParentDepartmentCode: req.Pcode,
 		OrganizationCode:     c.GetString("organizationCode"),
 	}
+	// 调用DepartmentServiceClient的List方法获取部门列表。
 	listDepartmentMessage, err := DepartmentServiceClient.List(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
@@ -58,6 +59,7 @@ func (d *HandlerDepartment) save(c *gin.Context) {
 		ParentDepartmentCode: req.ParentDepartmentCode,
 		OrganizationCode:     c.GetString("organizationCode"),
 	}
+	// 调用DepartmentServiceClient的Save方法添加部门。
 	departmentMessage, err := DepartmentServiceClient.Save(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
@@ -68,6 +70,7 @@ func (d *HandlerDepartment) save(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Success(res))
 }
 
+// read 读取部门信息
 func (d *HandlerDepartment) read(c *gin.Context) {
 	result := &common.Result{}
 	departmentCode := c.PostForm("departmentCode")
@@ -77,6 +80,7 @@ func (d *HandlerDepartment) read(c *gin.Context) {
 		DepartmentCode:   departmentCode,
 		OrganizationCode: c.GetString("organizationCode"),
 	}
+	// 调用DepartmentServiceClient的Read方法读取部门信息。
 	departmentMessage, err := DepartmentServiceClient.Read(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)

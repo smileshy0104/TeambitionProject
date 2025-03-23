@@ -11,11 +11,13 @@ type DepartmentDao struct {
 	conn *gorms.GormConn
 }
 
+// Save 保存部门
 func (d *DepartmentDao) Save(dpm *data.Department) error {
 	err := d.conn.Session(context.Background()).Save(&dpm).Error
 	return err
 }
 
+// FindDepartment 查询部门
 func (d *DepartmentDao) FindDepartment(ctx context.Context, organizationCode int64, parentDepartmentCode int64, name string) (*data.Department, error) {
 	session := d.conn.Session(ctx)
 	session = session.Model(&data.Department{}).Where("organization_code=? AND name=?", organizationCode, name)
@@ -30,6 +32,7 @@ func (d *DepartmentDao) FindDepartment(ctx context.Context, organizationCode int
 	return dp, err
 }
 
+// ListDepartment 查询部门
 func (d *DepartmentDao) ListDepartment(organizationCode int64, parentDepartmentCode int64, page int64, size int64) (list []*data.Department, total int64, err error) {
 	session := d.conn.Session(context.Background())
 	session = session.Model(&data.Department{})
@@ -42,6 +45,7 @@ func (d *DepartmentDao) ListDepartment(organizationCode int64, parentDepartmentC
 	return
 }
 
+// FindDepartmentById 根据id查询
 func (d *DepartmentDao) FindDepartmentById(ctx context.Context, id int64) (dt *data.Department, err error) {
 	session := d.conn.Session(ctx)
 	err = session.Where("id=?", id).Find(&dt).Error

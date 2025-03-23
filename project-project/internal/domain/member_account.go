@@ -18,6 +18,7 @@ type AccountDomain struct {
 	departmentDomain *DepartmentDomain
 }
 
+// AccountList 账单列表
 func (d *AccountDomain) AccountList(
 	organizationCode string,
 	memberId int64,
@@ -42,16 +43,20 @@ func (d *AccountDomain) AccountList(
 	}
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 获取账单列表
 	list, total, err := d.accountRepo.FindList(c, condition, organizationCodeId, departmentCodeId, page, pageSize)
 	if err != nil {
 		return nil, 0, model.DBError
 	}
 	var dList []*data.MemberAccountDisplay
+	// 遍历账单列表，将账单信息转换为 MemberAccountDisplay 并添加到列表中
 	for _, v := range list {
 		display := v.ToDisplay()
+		// 获取用户信息
 		memberInfo, _ := d.userRpcDomain.MemberInfo(c, v.MemberCode)
 		display.Avatar = memberInfo.Avatar
 		if v.DepartmentCode > 0 {
+			// 获取部门信息
 			department, err := d.departmentDomain.FindDepartmentById(v.DepartmentCode)
 			if err != nil {
 				return nil, 0, err

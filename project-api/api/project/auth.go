@@ -28,6 +28,7 @@ func (a *HandlerAuth) authList(c *gin.Context) {
 		Page:             page.Page,
 		PageSize:         page.PageSize,
 	}
+	// 调用 AuthServiceClient 的 AuthList 方法获取授权列表。
 	response, err := AuthServiceClient.AuthList(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)

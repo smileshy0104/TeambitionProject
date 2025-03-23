@@ -40,12 +40,13 @@ func (a *HandlerAccount) account(c *gin.Context) {
 		code, msg := errs.ParseGrpcError(err)
 		c.JSON(http.StatusOK, result.Fail(code, msg))
 	}
-	//返回数据
+	// 拷贝账单列表
 	var list []*model.MemberAccount
 	copier.Copy(&list, response.AccountList)
 	if list == nil {
 		list = []*model.MemberAccount{}
 	}
+	// 获取项目权限列表
 	var authList []*model.ProjectAuth
 	copier.Copy(&authList, response.AuthList)
 	if authList == nil {

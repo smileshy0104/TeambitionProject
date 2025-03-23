@@ -29,9 +29,11 @@ func New() *AccountService {
 	}
 }
 
+// Account 获取账单和权限列表
 func (a *AccountService) Account(ctx context.Context, msg *account.AccountReqMessage) (*account.AccountResponse, error) {
 	//1. 去account表查询account
 	//2. 去auth表查询authList
+	// 获取账单列表
 	accountList, total, err := a.accountDomain.AccountList(
 		msg.OrganizationCode,
 		msg.MemberId,
@@ -42,12 +44,15 @@ func (a *AccountService) Account(ctx context.Context, msg *account.AccountReqMes
 	if err != nil {
 		return nil, errs.GrpcError(err)
 	}
+	// 获取权限列表
 	authList, err := a.projectAuthDomain.AuthList(encrypts.DecryptNoErr(msg.OrganizationCode))
 	if err != nil {
 		return nil, errs.GrpcError(err)
 	}
+	// 拷贝accountList
 	var maList []*account.MemberAccount
 	copier.Copy(&maList, accountList)
+	// 拷贝权限列表
 	var prList []*account.ProjectAuth
 	copier.Copy(&prList, authList)
 	return &account.AccountResponse{

@@ -27,8 +27,10 @@ func New() *AuthService {
 	}
 }
 
+// AuthList 获取权限列表
 func (a *AuthService) AuthList(ctx context.Context, msg *auth.AuthReqMessage) (*auth.ListAuthMessage, error) {
 	organizationCode := encrypts.DecryptNoErr(msg.OrganizationCode)
+	// 获取权限列表
 	listPage, total, err := a.projectAuthDomain.AuthListPage(organizationCode, msg.Page, msg.PageSize)
 	if err != nil {
 		return nil, errs.GrpcError(err)

@@ -10,6 +10,7 @@ type MemberAccountDao struct {
 	conn *gorms.GormConn
 }
 
+// FindList 根据条件查询 成员账单
 func (m *MemberAccountDao) FindList(ctx context.Context, condition string, organizationCode int64, departmentCode int64, page int64, pageSize int64) (list []*data.MemberAccount, total int64, err error) {
 	session := m.conn.Session(ctx)
 	offset := (page - 1) * pageSize

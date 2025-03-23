@@ -16,9 +16,11 @@ type ProjectAuthDomain struct {
 	userRpcDomain   *UserRpcDomain
 }
 
+// AuthList 查询权限列表
 func (d *ProjectAuthDomain) AuthList(orgCode int64) ([]*data.ProjectAuthDisplay, *errs.BError) {
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	// 查询权限列表
 	list, err := d.projectAuthRepo.FindAuthList(c, orgCode)
 	if err != nil {
 		zap.L().Error("project AuthList projectAuthRepo.FindAuthList error", zap.Error(err))
@@ -32,6 +34,7 @@ func (d *ProjectAuthDomain) AuthList(orgCode int64) ([]*data.ProjectAuthDisplay,
 	return pdList, nil
 }
 
+// AuthListPage 分页查询
 func (d *ProjectAuthDomain) AuthListPage(orgCode int64, page int64, pageSize int64) ([]*data.ProjectAuthDisplay, int64, *errs.BError) {
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
