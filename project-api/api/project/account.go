@@ -15,15 +15,17 @@ import (
 type HandlerAccount struct {
 }
 
+// account 账户列表
 func (a *HandlerAccount) account(c *gin.Context) {
 	//接收请求参数  一些参数的校验 可以放在api这里
 	result := &common.Result{}
 	var req *model.AccountReq
 	_ = c.ShouldBind(&req)
+	// 获取当前登录用户id
 	memberId := c.GetInt64("memberId")
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	//调用project模块 查询账户列表
+	// 调用project模块 查询账户列表
 	msg := &account.AccountReqMessage{
 		MemberId:         memberId,
 		OrganizationCode: c.GetString("organizationCode"),
@@ -32,6 +34,7 @@ func (a *HandlerAccount) account(c *gin.Context) {
 		SearchType:       int32(req.SearchType),
 		DepartmentCode:   req.DepartmentCode,
 	}
+	// 调用AccountServiceClient的Account方法获取账户列表。
 	response, err := AccountServiceClient.Account(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)

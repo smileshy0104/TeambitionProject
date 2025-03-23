@@ -15,6 +15,7 @@ import (
 type HandlerAuth struct {
 }
 
+// authList 授权列表
 func (a *HandlerAuth) authList(c *gin.Context) {
 	result := &common.Result{}
 	organizationCode := c.GetString("organizationCode")

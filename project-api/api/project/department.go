@@ -15,6 +15,7 @@ import (
 type HandlerDepartment struct {
 }
 
+// department 部门列表
 func (d *HandlerDepartment) department(c *gin.Context) {
 	result := &common.Result{}
 	var req *model.DepartmentReq
@@ -44,6 +45,7 @@ func (d *HandlerDepartment) department(c *gin.Context) {
 	}))
 }
 
+// save 添加部门
 func (d *HandlerDepartment) save(c *gin.Context) {
 	result := &common.Result{}
 	var req *model.DepartmentReq
