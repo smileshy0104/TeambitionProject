@@ -230,7 +230,7 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 	exp := time.Duration(config.C.JwtConfig.AccessExp*3600*24) * time.Second
 	rExp := time.Duration(config.C.JwtConfig.RefreshExp*3600*24) * time.Second
 	// 生成JWT令牌
-	token := jwts.CreateToken(memIdStr, exp, config.C.JwtConfig.AccessSecret, rExp, config.C.JwtConfig.RefreshSecret)
+	token := jwts.CreateToken(memIdStr, exp, config.C.JwtConfig.AccessSecret, rExp, config.C.JwtConfig.RefreshSecret, msg.Ip)
 	// 将生成的令牌信息封装到TokenMessage对象中
 	tokenList := &login.TokenMessage{
 		AccessToken:    token.AccessToken,
@@ -265,7 +265,7 @@ func (ls *LoginService) TokenVerifyOld(ctx context.Context, msg *login.LoginMess
 	}
 
 	// 解析token，验证其有效性
-	parseToken, err := jwts.ParseToken(token, config.C.JwtConfig.AccessSecret)
+	parseToken, err := jwts.ParseTokenOld(token, config.C.JwtConfig.AccessSecret)
 	if err != nil {
 		// 如果token验证失败，记录错误日志，并返回登录错误
 		zap.L().Error("Login  TokenVerify error", zap.Error(err))
@@ -313,7 +313,7 @@ func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage
 	}
 
 	// 解析Token，如果解析失败，记录错误日志并返回登录错误
-	parseToken, err := jwts.ParseToken(token, config.C.JwtConfig.AccessSecret)
+	parseToken, err := jwts.ParseToken(token, config.C.JwtConfig.AccessSecret, msg.Ip)
 	if err != nil {
 		zap.L().Error("Login  TokenVerify error", zap.Error(err))
 		return nil, errs.GrpcError(model.NoLogin)

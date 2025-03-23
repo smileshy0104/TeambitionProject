@@ -37,6 +37,7 @@ message LoginMessage {
   string password = 2;
   // token 登录令牌
   string token = 3;
+  string ip = 4;
 }
 // LoginResponse 用户登录的响应体
 message LoginResponse{
@@ -82,6 +83,11 @@ message MemberMessage {
   string organizationCode = 15;
   // avatar 头像
   string avatar = 16;
+}
+
+// MemberMessageList 用户信息列表消息体
+message MemberMessageList {
+  repeated MemberMessage list = 1;
 }
 
 // OrganizationMessage 组织信息消息体
@@ -130,6 +136,7 @@ message TokenMessage{
 message UserMessage{
   // memId 用户ID
   int64 memId = 1;
+  repeated int64 mIds = 2;
 }
 // OrgListResponse 组织列表响应体
 message OrgListResponse{
@@ -151,4 +158,6 @@ service LoginService {
   rpc MyOrgList(UserMessage) returns (OrgListResponse) {}
   // FindMemInfoById 根据用户ID获取用户信息
   rpc FindMemInfoById(UserMessage) returns (MemberMessage) {}
+  // FindMemInfoByIds 根据用户ID列表获取用户信息
+  rpc FindMemInfoByIds(UserMessage) returns (MemberMessageList) {}
 }

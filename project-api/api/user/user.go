@@ -150,6 +150,8 @@ func (u *HandlerUser) login(c *gin.Context) {
 		c.JSON(http.StatusOK, result.Fail(http.StatusBadRequest, "copy有误"))
 		return
 	}
+	// TODO IP加入
+	msg.Ip = GetIp(c)
 	// 调用gRPC服务的Login方法进行登录，如果登录失败，则解析错误信息并返回
 	loginRsp, err := LoginServiceClient.Login(ctx, msg)
 	if err != nil {
@@ -203,4 +205,13 @@ func (u *HandlerUser) myOrgList(c *gin.Context) {
 	copier.Copy(&orgs, list.OrganizationList)
 	// 返回成功的响应，包含组织列表。
 	c.JSON(http.StatusOK, result.Success(orgs))
+}
+
+// GetIp 获取ip函数
+func GetIp(c *gin.Context) string {
+	ip := c.ClientIP()
+	if ip == "::1" {
+		ip = "127.0.0.1"
+	}
+	return ip
 }
