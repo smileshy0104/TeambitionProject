@@ -32,10 +32,10 @@ type TaskService struct {
 	taskStagesTemplateRepo              repo.TaskStagesTemplateRepo // 任务阶段模板数据存储库，管理任务阶段模板数据
 	taskStagesRepo                      repo.TaskStagesRepo         // 任务阶段数据存储库，管理任务阶段数据
 	taskRepo                            repo.TaskRepo               // 任务数据存储库，管理任务数据
-	projectLogRepo                      repo.ProjectLogRepo
-	taskWorkTimeRepo                    repo.TaskWorkTimeRepo
-	fileRepo                            repo.FileRepo
-	sourceLinkRepo                      repo.SourceLinkRepo
+	projectLogRepo                      repo.ProjectLogRepo         // 项目日志数据存储库，管理项目日志数据
+	taskWorkTimeRepo                    repo.TaskWorkTimeRepo       // 任务工作时间数据存储库，管理任务工作时间数据
+	fileRepo                            repo.FileRepo               // 文件数据存储库，管理文件数据
+	sourceLinkRepo                      repo.SourceLinkRepo         // 源链接数据存储库，管理源链接数据
 }
 
 // New 创建并返回一个新的 TaskService 实例。
@@ -49,10 +49,10 @@ func New() *TaskService {
 		taskStagesTemplateRepo: dao.NewTaskStagesTemplateDao(), // 创建新的任务阶段模板数据存储库实例
 		taskStagesRepo:         dao.NewTaskStagesDao(),         // 创建新的任务阶段数据存储库实例
 		taskRepo:               dao.NewTaskDao(),               // 创建新的任务数据存储库实例
-		projectLogRepo:         dao.NewProjectLogDao(),
-		taskWorkTimeRepo:       dao.NewTaskWorkTimeDao(),
-		fileRepo:               dao.NewFileDao(),
-		sourceLinkRepo:         dao.NewSourceLinkDao(),
+		projectLogRepo:         dao.NewProjectLogDao(),         // 创建新的项目日志数据存储库实例
+		taskWorkTimeRepo:       dao.NewTaskWorkTimeDao(),       // 创建新的任务工作时间数据存储库实例
+		fileRepo:               dao.NewFileDao(),               // 创建新的文件数据存储库实例
+		sourceLinkRepo:         dao.NewSourceLinkDao(),         // 创建新的源链接数据存储库实例
 	}
 }
 
@@ -783,8 +783,10 @@ func (t *TaskService) SaveTaskFile(ctx context.Context, msg *task.TaskFileReqMes
 	return &task.TaskFileResponse{}, nil
 }
 
+// TaskSources 获取任务关联文件
 func (t *TaskService) TaskSources(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskSourceResponse, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
+	// 通过任务编码查询关联文件数据
 	sourceLinks, err := t.sourceLinkRepo.FindByTaskCode(context.Background(), taskCode)
 	if err != nil {
 		zap.L().Error("project task SaveTaskFile sourceLinkRepo.FindByTaskCode error", zap.Error(err))
@@ -797,16 +799,17 @@ func (t *TaskService) TaskSources(ctx context.Context, msg *task.TaskReqMessage)
 	for _, v := range sourceLinks {
 		fIdList = append(fIdList, v.SourceCode)
 	}
+	// 通过文件id查询文件数据
 	files, err := t.fileRepo.FindByIds(context.Background(), fIdList)
 	if err != nil {
 		zap.L().Error("project task SaveTaskFile fileRepo.FindByIds error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	fMap := make(map[int64]*data.File)
+	fMap := make(map[int64]*dataNew.File)
 	for _, v := range files {
 		fMap[v.Id] = v
 	}
-	var list []*data.SourceLinkDisplay
+	var list []*dataNew.SourceLinkDisplay
 	for _, v := range sourceLinks {
 		list = append(list, v.ToDisplay(fMap[v.SourceCode]))
 	}
@@ -815,14 +818,16 @@ func (t *TaskService) TaskSources(ctx context.Context, msg *task.TaskReqMessage)
 	return &task.TaskSourceResponse{List: slMsg}, nil
 }
 
+// CreateComment 创建评论
 func (t *TaskService) CreateComment(ctx context.Context, msg *task.TaskReqMessage) (*task.CreateCommentResponse, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
+	// 通过任务编码查询任务数据
 	taskById, err := t.taskRepo.FindTaskById(context.Background(), taskCode)
 	if err != nil {
 		zap.L().Error("project task CreateComment fileRepo.FindTaskById error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	pl := &data.ProjectLog{
+	pl := &dataNew.ProjectLog{
 		MemberCode:   msg.MemberId,
 		Content:      msg.CommentContent,
 		Remark:       msg.CommentContent,
@@ -836,6 +841,7 @@ func (t *TaskService) CreateComment(ctx context.Context, msg *task.TaskReqMessag
 		Icon:         "plus",
 		IsRobot:      0,
 	}
+	// 调用 ProjectLogRepo 的 SaveProjectLog 方法保存评论。
 	t.projectLogRepo.SaveProjectLog(pl)
 	return &task.CreateCommentResponse{}, nil
 }

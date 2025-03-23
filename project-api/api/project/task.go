@@ -556,6 +556,7 @@ func (t *HandlerTask) taskSources(c *gin.Context) {
 // createComment 创建评论。
 func (t *HandlerTask) createComment(c *gin.Context) {
 	result := &common.Result{}
+	// 获取评论参数。
 	req := model.CommentReq{}
 	c.ShouldBind(&req)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -566,6 +567,7 @@ func (t *HandlerTask) createComment(c *gin.Context) {
 		Mentions:       req.Mentions,
 		MemberId:       c.GetInt64("memberId"),
 	}
+	// 调用 TaskServiceClient 的 CreateComment 方法创建评论。
 	_, err := TaskServiceClient.CreateComment(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
