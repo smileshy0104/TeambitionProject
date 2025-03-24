@@ -61,4 +61,7 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group.POST("/department/read", d.read)
 	auth := NewAuth()
 	group.POST("/auth", auth.authList)
+	group.POST("/auth/apply", auth.apply)
+	menu := NewMenu()
+	group.POST("/menu/menu", menu.menuList)
 }

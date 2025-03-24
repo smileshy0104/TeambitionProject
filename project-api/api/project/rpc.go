@@ -11,6 +11,7 @@ import (
 	"project-grpc/account"
 	"project-grpc/auth"
 	"project-grpc/department"
+	"project-grpc/menu"
 	"project-grpc/project"
 	"project-grpc/task"
 )
@@ -22,6 +23,7 @@ var TaskServiceClient task.TaskServiceClient
 var AccountServiceClient account.AccountServiceClient
 var DepartmentServiceClient department.DepartmentServiceClient
 var AuthServiceClient auth.AuthServiceClient
+var MenuServiceClient menu.MenuServiceClient
 
 // InitRpcProjectClient 初始化项目服务的 gRPC 客户端。
 // 该函数通过以下步骤完成初始化：
@@ -48,4 +50,5 @@ func InitRpcProjectClient() {
 	AccountServiceClient = account.NewAccountServiceClient(conn)
 	DepartmentServiceClient = department.NewDepartmentServiceClient(conn)
 	AuthServiceClient = auth.NewAuthServiceClient(conn)
+	MenuServiceClient = menu.NewMenuServiceClient(conn)
 }

@@ -131,6 +131,7 @@ message ProjectRpcMessage{
   string projectCode = 12; // 项目代码
   bool deleted = 13; // 删除标志，表示项目是否被删除
   string collectType = 14; // 收藏类型
+  string taskCode = 15; // 任务代码
 }
 
 // 项目模板消息，包含项目模板的详细信息
@@ -209,6 +210,26 @@ message ProjectLogResponse{
   int64 total = 2;
 }
 
+message ProjectNodeMessage{
+  int64 id = 1;
+  string node = 2;
+  string title = 3;
+  string pnode = 4;
+  int32 isLogin = 5;
+  int32 isMenu = 6;
+  int32 isAuth = 7;
+  repeated ProjectNodeMessage children = 8;
+}
+
+message ProjectNodeResponseMessage {
+  repeated ProjectNodeMessage nodes = 1;
+}
+message FindProjectByMemberIdResponse{
+  ProjectMessage project = 1;
+  bool isMember = 2;
+  bool isOwner = 3;
+}
+
 // ProjectService 定义了项目相关的服务接口
 service ProjectService {
   /**
@@ -233,4 +254,6 @@ service ProjectService {
   rpc UpdateCollectProject(ProjectRpcMessage) returns (CollectProjectResponse){}
   rpc UpdateProject(UpdateProjectMessage) returns (UpdateProjectResponse){}
   rpc GetLogBySelfProject(ProjectRpcMessage) returns (ProjectLogResponse){}
+  rpc NodeList(ProjectRpcMessage) returns (ProjectNodeResponseMessage){}
+  rpc FindProjectByMemberId(ProjectRpcMessage) returns (FindProjectByMemberIdResponse){}
 }
