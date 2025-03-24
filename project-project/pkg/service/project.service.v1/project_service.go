@@ -408,7 +408,7 @@ func (ps *ProjectService) GetLogBySelfProject(ctx context.Context, msg *project.
 		zap.L().Error("project ProjectService::GetLogBySelfProject projectLogRepo.FindProjectByIds error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	pMap := make(map[int64]*data.Project)
+	pMap := make(map[int64]*pro.Project)
 	for _, v := range projects {
 		pMap[v.Id] = v
 	}
@@ -422,7 +422,7 @@ func (ps *ProjectService) GetLogBySelfProject(ctx context.Context, msg *project.
 		zap.L().Error("project ProjectService::GetLogBySelfProject projectLogRepo.FindTaskByIds error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	tMap := make(map[int64]*data.Task)
+	tMap := make(map[int64]*task.Task)
 	for _, v := range tasks {
 		tMap[v.Id] = v
 	}
