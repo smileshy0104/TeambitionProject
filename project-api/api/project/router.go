@@ -24,6 +24,8 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group := r.Group("/project")
 	// 使用TokenVerify中间件对项目列表的API进行身份验证
 	group.Use(midd.TokenVerify())
+	group.Use(Auth())
+	group.Use(ProjectAuth())
 	group.POST("/index", h.index)                                     // Index 获取项目的菜单列表
 	group.POST("/project/selfList", h.myProjectList)                  // myProjectList 获取用户自身项目列表请求
 	group.POST("/project", h.myProjectList)                           // myProjectList 获取项目列表请求
