@@ -7,6 +7,7 @@ import (
 	"project-common/errs"
 )
 
+// ProjectAuth 项目权限
 func ProjectAuth() func(*gin.Context) {
 	return func(c *gin.Context) {
 		//如果此用户 不是项目的成员 认为你不能查看 不能操作此项目 直接报无权限
