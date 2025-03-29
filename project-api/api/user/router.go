@@ -3,6 +3,7 @@ package user
 
 // 导入必要的库
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"project-api/api/midd"
@@ -23,7 +24,8 @@ func init() {
 // Route 方法为用户模块定义路由规则
 func (*RouterUser) Route(r *gin.Engine) {
 	//初始化grpc的客户端连接
-	//InitRpcUserClient()
+	InitRpcUserClient()
+	fmt.Println("111111111")
 	h := New()
 	// 定义登录验证码获取的API路由，使用POST方法
 	r.POST("/project/login/getCaptcha", h.getCaptcha)

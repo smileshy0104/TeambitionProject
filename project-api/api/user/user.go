@@ -51,6 +51,7 @@ func (*HandlerUser) GetCaptcha(ctx *gin.Context) {
 // 该方法从请求上下文中提取手机号码，然后通过gRPC调用登录服务获取验证码。
 // 它使用了context来设置操作的超时时间，以避免长时间运行的请求阻塞服务。
 func (*HandlerUser) getCaptcha(ctx *gin.Context) {
+	fmt.Println("hhhhhh")
 	// 初始化结果对象，用于后续返回结果。
 	result := &common.Result{}
 
