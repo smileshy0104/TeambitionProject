@@ -44,6 +44,8 @@ services:
     ports:
       - ${ETCD_PORT}:2379
       - 2380:2380
+
+# 需要打包对应的镜像
   Project-User:
     container_name: project-user
     image: project-user:latest

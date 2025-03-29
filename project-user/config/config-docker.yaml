@@ -1,10 +1,10 @@
 server:
-  name: "project-user"
+  name: "menu-user"
   addr: "0.0.0.0:8080"
 zap:
-  debugFileName: "/logs/debug/project-debug.log"
-  infoFileName: "/logs/info/project-info.log"
-  warnFileName: "/logs/error/project-error.log"
+  debugFileName: "/logs/debug/menu-debug.log"
+  infoFileName: "/logs/info/menu-info.log"
+  warnFileName: "/logs/error/menu-error.log"
   maxSize: 500,
   maxAge: 28,
   MaxBackups: 3

@@ -2,9 +2,9 @@ server:
   name: "project-user"
   addr: "127.0.0.1:8080"
 zap:
-  debugFileName: "D:\\go\\project\\project_ws\\logs\\debug\\project-debug.log"
-  infoFileName: "D:\\go\\project\\project_ws\\logs\\info\\project-info.log"
-  warnFileName: "D:\\go\\project\\project_ws\\logs\\error\\project-error.log"
+  debugFileName: "D:\\go\\menu\\ms_project\\logs\\debug\\menu-debug.log"
+  infoFileName: "D:\\go\\menu\\ms_project\\logs\\info\\menu-info.log"
+  warnFileName: "D:\\go\\menu\\ms_project\\logs\\error\\menu-error.log"
   maxSize: 500,
   maxAge: 28,
   MaxBackups: 3
