@@ -10,9 +10,7 @@ import (
 	"project-grpc/task"
 	"project-grpc/user/login"
 	"project-project/internal/dao"
-	dataNew "project-project/internal/data"
-	"project-project/internal/data/pro"
-	data "project-project/internal/data/task"
+	"project-project/internal/data"
 	"project-project/internal/database"
 	"project-project/internal/database/tran"
 	"project-project/internal/repo"
@@ -121,7 +119,7 @@ func (t *TaskService) MemberProjectList(co context.Context, msg *task.TaskReqMes
 	}
 	var mIds []int64
 	// 创建一个映射，键为成员ID，值为项目成员对象
-	pmMap := make(map[int64]*pro.ProjectMember)
+	pmMap := make(map[int64]*data.ProjectMember)
 	// 遍历项目成员列表，将成员ID添加到 mIds 切片并创建一个映射，键为成员ID，值为项目成员对象
 	for _, v := range projectMembers {
 		mIds = append(mIds, v.MemberCode)
@@ -494,7 +492,7 @@ func (t *TaskService) MyTaskList(ctx context.Context, msg *task.TaskReqMessage) 
 	}
 	// 获取项目信息
 	pList, err := t.projectRepo.FindProjectByIds(ctx, pids)
-	projectMap := pro.ToProjectMap(pList)
+	projectMap := data.ToProjectMap(pList)
 
 	// 获取成员信息
 	mList, err := rpc.LoginServiceClient.FindMemInfoByIds(ctx, &login.UserMessage{
@@ -618,7 +616,7 @@ func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*t
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	// 查询任务日志
-	var list []*dataNew.ProjectLog
+	var list []*data.ProjectLog
 	var total int64
 	var err error
 	if all == 1 {
@@ -638,7 +636,7 @@ func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*t
 	if total == 0 {
 		return &task.TaskLogList{}, nil
 	}
-	var displayList []*dataNew.ProjectLogDisplay
+	var displayList []*data.ProjectLogDisplay
 	var mIdList []int64
 	// 遍历任务日志列表，将memberCode添加到mIdList切片中
 	for _, v := range list {
@@ -657,7 +655,7 @@ func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*t
 		// 获取对应日志信息
 		display := v.ToDisplay()
 		message := mMap[v.MemberCode]
-		m := dataNew.Member{}
+		m := data.Member{}
 		m.Name = message.Name
 		m.Id = message.Id
 		m.Avatar = message.Avatar
@@ -675,7 +673,7 @@ func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMes
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	var list []*dataNew.TaskWorkTime
+	var list []*data.TaskWorkTime
 	var err error
 	// FindWorkTimeList 查询任务工时
 	list, err = t.taskWorkTimeRepo.FindWorkTimeList(c, taskCode)
@@ -686,7 +684,7 @@ func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMes
 	if len(list) == 0 {
 		return &task.TaskWorkTimeResponse{}, nil
 	}
-	var displayList []*dataNew.TaskWorkTimeDisplay
+	var displayList []*data.TaskWorkTimeDisplay
 	var mIdList []int64
 	// 遍历任务工时列表，将memberCode添加到mIdList切片中
 	for _, v := range list {
@@ -703,7 +701,7 @@ func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMes
 	for _, v := range list {
 		display := v.ToDisplay()
 		message := mMap[v.MemberCode]
-		m := dataNew.Member{}
+		m := data.Member{}
 		m.Name = message.Name
 		m.Id = message.Id
 		m.Avatar = message.Avatar
@@ -718,7 +716,7 @@ func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMes
 
 // SaveTaskWorkTime 保存任务工时
 func (t *TaskService) SaveTaskWorkTime(ctx context.Context, msg *task.TaskReqMessage) (*task.SaveTaskWorkTimeResponse, error) {
-	tmt := &dataNew.TaskWorkTime{}
+	tmt := &data.TaskWorkTime{}
 	tmt.BeginTime = msg.BeginTime
 	tmt.Num = int(msg.Num)
 	tmt.Content = msg.Content
@@ -739,7 +737,7 @@ func (t *TaskService) SaveTaskWorkTime(ctx context.Context, msg *task.TaskReqMes
 func (t *TaskService) SaveTaskFile(ctx context.Context, msg *task.TaskFileReqMessage) (*task.TaskFileResponse, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
 	//存file表
-	f := &dataNew.File{
+	f := &data.File{
 		PathName:         msg.PathName,
 		Title:            msg.FileName,
 		Extension:        msg.Extension,
@@ -764,7 +762,7 @@ func (t *TaskService) SaveTaskFile(ctx context.Context, msg *task.TaskFileReqMes
 		return nil, errs.GrpcError(model.DBError)
 	}
 	//存入source_link（关联文件数据）
-	sl := &dataNew.SourceLink{
+	sl := &data.SourceLink{
 		SourceType:       "file",
 		SourceCode:       f.Id,
 		LinkType:         "task",
@@ -805,11 +803,11 @@ func (t *TaskService) TaskSources(ctx context.Context, msg *task.TaskReqMessage)
 		zap.L().Error("project task SaveTaskFile fileRepo.FindByIds error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	fMap := make(map[int64]*dataNew.File)
+	fMap := make(map[int64]*data.File)
 	for _, v := range files {
 		fMap[v.Id] = v
 	}
-	var list []*dataNew.SourceLinkDisplay
+	var list []*data.SourceLinkDisplay
 	for _, v := range sourceLinks {
 		list = append(list, v.ToDisplay(fMap[v.SourceCode]))
 	}
@@ -827,7 +825,7 @@ func (t *TaskService) CreateComment(ctx context.Context, msg *task.TaskReqMessag
 		zap.L().Error("project task CreateComment fileRepo.FindTaskById error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	pl := &dataNew.ProjectLog{
+	pl := &data.ProjectLog{
 		MemberCode:   msg.MemberId,
 		Content:      msg.CommentContent,
 		Remark:       msg.CommentContent,

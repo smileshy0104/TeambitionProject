@@ -39,7 +39,7 @@ func InitRpcProjectClient() {
 
 	// 使用 etcd 解析器建立 gRPC 连接，目标服务名为 "project"。
 	// 连接使用不安全的传输凭据（仅适用于开发环境，生产环境中应使用安全凭据）。
-	conn, err := grpc.Dial("etcd:///project", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("127.0.0.1:8881", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		// 如果连接失败，记录致命错误并终止程序。
 		log.Fatalf("无法连接到服务: %v", err)
