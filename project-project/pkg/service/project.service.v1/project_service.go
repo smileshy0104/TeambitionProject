@@ -11,9 +11,6 @@ import (
 	"project-grpc/user/login"
 	"project-project/internal/dao"
 	"project-project/internal/data"
-	"project-project/internal/data/menu"
-	"project-project/internal/data/pro"
-	"project-project/internal/data/task"
 	"project-project/internal/database"
 	"project-project/internal/database/tran"
 	"project-project/internal/domain"
@@ -70,7 +67,7 @@ func (p *ProjectService) Index(context.Context, *project.IndexMessage) (*project
 		return nil, errs.GrpcError(model.DBError)
 	}
 	// 将获取的菜单信息转换为子菜单结构
-	childs := menu.CovertChild(pms)
+	childs := data.CovertChild(pms)
 	// 初始化菜单消息列表
 	var mms []*project.MenuMessage
 	// 将子菜单结构复制到菜单消息列表中
@@ -86,7 +83,7 @@ func (p *ProjectService) FindProjectByMemId(ctx context.Context, msg *project.Pr
 	memberId := msg.MemberId
 	page := msg.Page
 	pageSize := msg.PageSize
-	var pms []*pro.ProjectAndMember
+	var pms []*data.ProjectAndMember
 	var total int64
 	var err error
 	// 根据选择的类型查询项目
@@ -113,7 +110,7 @@ func (p *ProjectService) FindProjectByMemId(ctx context.Context, msg *project.Pr
 			zap.L().Error("project FindProjectByMemId::FindCollectProjectByMemId error", zap.Error(err))
 			return nil, errs.GrpcError(model.DBError)
 		}
-		var cMap = make(map[int64]*pro.ProjectAndMember)
+		var cMap = make(map[int64]*data.ProjectAndMember)
 		for _, v := range collectPms {
 			cMap[v.Id] = v
 		}
@@ -135,7 +132,7 @@ func (p *ProjectService) FindProjectByMemId(ctx context.Context, msg *project.Pr
 	copier.Copy(&pmm, pms)
 	for _, v := range pmm {
 		v.Code, _ = encrypts.EncryptInt64(v.ProjectCode, model.AESKey)
-		pam := pro.ToMap(pms)[v.Id]
+		pam := data.ToMap(pms)[v.Id]
 		v.AccessControlType = pam.GetAccessControlType()
 		v.OrganizationCode, _ = encrypts.EncryptInt64(pam.OrganizationCode, model.AESKey)
 		v.JoinTime = tms.FormatByMill(pam.JoinTime)
@@ -157,7 +154,7 @@ func (ps *ProjectService) FindProjectTemplate(ctx context.Context, msg *project.
 	page := msg.Page
 	pageSize := msg.PageSize
 	// 定义项目模板数组和总数变量
-	var pts []pro.ProjectTemplate
+	var pts []data.ProjectTemplate
 	var total int64
 	var err error
 
@@ -177,17 +174,17 @@ func (ps *ProjectService) FindProjectTemplate(ctx context.Context, msg *project.
 	}
 
 	// 根据项目模板ID查询任务阶段模板
-	tsts, err := ps.taskStagesTemplateRepo.FindInProTemIds(ctx, pro.ToProjectTemplateIds(pts))
+	tsts, err := ps.taskStagesTemplateRepo.FindInProTemIds(ctx, data.ToProjectTemplateIds(pts))
 	if err != nil {
 		zap.L().Error("project FindProjectTemplate FindInProTemIds error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
 
 	// 将查询到的项目模板和任务阶段模板进行组装
-	var ptas []*pro.ProjectTemplateAll
+	var ptas []*data.ProjectTemplateAll
 	for _, v := range pts {
 		// 将项目模板和任务阶段模板进行组装
-		ptas = append(ptas, v.Convert(task.CovertProjectMap(tsts)[v.Id]))
+		ptas = append(ptas, v.Convert(data.CovertProjectMap(tsts)[v.Id]))
 	}
 
 	// 将组装好的数据转换为目标结构并返回
@@ -208,7 +205,7 @@ func (ps *ProjectService) SaveProject(ctx context.Context, msg *project.ProjectR
 	// 将解密后的模板代码转换为int64类型
 	templateCode, _ := strconv.ParseInt(templateCodeStr, 10, 64)
 	//1. 保存项目表
-	pr := &pro.Project{
+	pr := &data.Project{
 		Name:              msg.Name,
 		Description:       msg.Description,
 		TemplateCode:      int(templateCode),
@@ -229,7 +226,7 @@ func (ps *ProjectService) SaveProject(ctx context.Context, msg *project.ProjectR
 			return errs.GrpcError(model.DBError)
 		}
 		// 创建项目成员关联对象
-		pm := &pro.ProjectMember{
+		pm := &data.ProjectMember{
 			ProjectCode: pr.Id,
 			MemberCode:  msg.MemberId,
 			JoinTime:    time.Now().UnixMilli(),
@@ -361,7 +358,7 @@ func (ps *ProjectService) UpdateProject(ctx context.Context, msg *project.Update
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	// 创建一个Project实例，填充从消息中获取的更新信息
-	proj := &pro.Project{
+	proj := &data.Project{
 		Id:                 projectCode,
 		Name:               msg.Name,
 		Description:        msg.Description,
@@ -408,7 +405,7 @@ func (ps *ProjectService) GetLogBySelfProject(ctx context.Context, msg *project.
 		zap.L().Error("project ProjectService::GetLogBySelfProject projectLogRepo.FindProjectByIds error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	pMap := make(map[int64]*pro.Project)
+	pMap := make(map[int64]*data.Project)
 	for _, v := range projects {
 		pMap[v.Id] = v
 	}
@@ -422,7 +419,7 @@ func (ps *ProjectService) GetLogBySelfProject(ctx context.Context, msg *project.
 		zap.L().Error("project ProjectService::GetLogBySelfProject projectLogRepo.FindTaskByIds error", zap.Error(err))
 		return nil, errs.GrpcError(model.DBError)
 	}
-	tMap := make(map[int64]*task.Task)
+	tMap := make(map[int64]*data.Task)
 	for _, v := range tasks {
 		tMap[v.Id] = v
 	}

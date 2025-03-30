@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"project-project/internal/data/pro"
+	"project-project/internal/data"
 	"project-project/internal/database/gorms"
 )
 
@@ -17,10 +17,10 @@ func NewProjectTemplateDao() *ProjectTemplateDao {
 }
 
 // FindProjectTemplateSystem 根据系统查询项目模版
-func (p *ProjectTemplateDao) FindProjectTemplateSystem(ctx context.Context, page int64, size int64) (pts []pro.ProjectTemplate, total int64, err error) {
+func (p *ProjectTemplateDao) FindProjectTemplateSystem(ctx context.Context, page int64, size int64) (pts []data.ProjectTemplate, total int64, err error) {
 	session := p.conn.Session(ctx)
 	err = session.
-		Model(&pro.ProjectTemplate{}).
+		Model(&data.ProjectTemplate{}).
 		Where("is_system=?", 1).
 		Limit(int(size)).
 		Offset(int((page - 1) * size)).
@@ -28,15 +28,15 @@ func (p *ProjectTemplateDao) FindProjectTemplateSystem(ctx context.Context, page
 	if err != nil {
 		return pts, total, err
 	}
-	err = session.Model(&pro.ProjectTemplate{}).Where("is_system=?", 1).Count(&total).Error
+	err = session.Model(&data.ProjectTemplate{}).Where("is_system=?", 1).Count(&total).Error
 	return pts, total, err
 }
 
 // FindProjectTemplateCustom 根据用户查询项目模版
-func (p *ProjectTemplateDao) FindProjectTemplateCustom(ctx context.Context, memId int64, organizationCode int64, page int64, size int64) (pts []pro.ProjectTemplate, total int64, err error) {
+func (p *ProjectTemplateDao) FindProjectTemplateCustom(ctx context.Context, memId int64, organizationCode int64, page int64, size int64) (pts []data.ProjectTemplate, total int64, err error) {
 	session := p.conn.Session(ctx)
 	err = session.
-		Model(&pro.ProjectTemplate{}).
+		Model(&data.ProjectTemplate{}).
 		Where("is_system=? and member_code=? and organization_code=?", 0, memId, organizationCode).
 		Limit(int(size)).
 		Offset(int((page - 1) * size)).
@@ -44,15 +44,15 @@ func (p *ProjectTemplateDao) FindProjectTemplateCustom(ctx context.Context, memI
 	if err != nil {
 		return pts, total, err
 	}
-	err = session.Model(&pro.ProjectTemplate{}).Where("is_system=? and member_code=? and organization_code=?", 0, memId, organizationCode).Count(&total).Error
+	err = session.Model(&data.ProjectTemplate{}).Where("is_system=? and member_code=? and organization_code=?", 0, memId, organizationCode).Count(&total).Error
 	return pts, total, err
 }
 
 // FindProjectTemplateAll 根据组织查询项目模版
-func (p *ProjectTemplateDao) FindProjectTemplateAll(ctx context.Context, organizationCode int64, page int64, size int64) (pts []pro.ProjectTemplate, total int64, err error) {
+func (p *ProjectTemplateDao) FindProjectTemplateAll(ctx context.Context, organizationCode int64, page int64, size int64) (pts []data.ProjectTemplate, total int64, err error) {
 	session := p.conn.Session(ctx)
 	err = session.
-		Model(&pro.ProjectTemplate{}).
+		Model(&data.ProjectTemplate{}).
 		Where("organization_code=?", organizationCode).
 		Limit(int(size)).
 		Offset(int((page - 1) * size)).
@@ -60,6 +60,6 @@ func (p *ProjectTemplateDao) FindProjectTemplateAll(ctx context.Context, organiz
 	if err != nil {
 		return pts, total, err
 	}
-	err = session.Model(&pro.ProjectTemplate{}).Where("organization_code=?", organizationCode).Count(&total).Error
+	err = session.Model(&data.ProjectTemplate{}).Where("organization_code=?", organizationCode).Count(&total).Error
 	return pts, total, err
 }

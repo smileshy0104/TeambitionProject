@@ -9,7 +9,7 @@ zap:
   maxAge: 28,
   MaxBackups: 3
 redis:
-  host: "redis6"
+  host: "host.docker.internal"
   port: 6379
   password: ""
   db: 0

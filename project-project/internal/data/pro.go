@@ -1,4 +1,4 @@
-package pro
+package data
 
 import (
 	"project-common/encrypts"
