@@ -3,7 +3,6 @@ package project
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"project-api/api/midd"
 	"project-api/router"
 )
 
@@ -23,7 +22,7 @@ func (*RouterProject) Route(r *gin.Engine) {
 	// 定义对应的路由组规则
 	group := r.Group("/project")
 	// 使用TokenVerify中间件对项目列表的API进行身份验证
-	group.Use(midd.TokenVerify())
+	//group.Use(midd.TokenVerify())
 	//group.Use(Auth())
 	//group.Use(ProjectAuth())
 	group.POST("/index", h.index)                                     // Index 获取项目的菜单列表
