@@ -6,6 +6,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"log"
 	"project-user/config"
 )
 
@@ -26,6 +27,7 @@ func init() {
 	if err != nil {
 		panic("连接数据库失败, error=" + err.Error())
 	}
+	log.Printf("数据库连接成功！")
 }
 
 func GetDB() *gorm.DB {

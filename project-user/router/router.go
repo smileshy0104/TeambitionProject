@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/resolver"
@@ -74,6 +75,7 @@ func RegisterGrpc() *grpc.Server {
 			return
 		}
 	}()
+	fmt.Println("grpc server started")
 	return s
 }
 
@@ -90,6 +92,8 @@ func RegisterEtcdServer() {
 	r := discovery.NewRegister(config.C.EtcdConfig.Addrs, logs.LG)
 	_, err := r.Register(info, 2)
 	if err != nil {
+		log.Println("register etcd server error")
 		log.Fatalln(err)
 	}
+	log.Println("我成功了，哈哈哈哈！")
 }

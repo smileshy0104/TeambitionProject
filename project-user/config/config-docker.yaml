@@ -20,7 +20,7 @@ grpc:
   weight: 2
 etcd:
   addrs:
-    - "etcd3:2379"
+    - "host.docker.internal:2379"
 mysql:
   username: root
   password: 123456

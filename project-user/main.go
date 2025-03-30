@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	srv "project-common"
 	"project-user/config"
@@ -13,6 +14,7 @@ func main() {
 	router.InitRouter(r)
 	//grpc服务注册
 	gc := router.RegisterGrpc()
+	fmt.Println("grpc服务注册成功")
 	//grpc服务注册到etcd
 	router.RegisterEtcdServer()
 	stop := func() {
