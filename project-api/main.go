@@ -19,7 +19,6 @@ func main() {
 	r.StaticFS("/upload", http.Dir("upload"))
 	//路由
 	router.InitRouter(r)
-	fmt.Println("hhhhhhh")
 	//开启pprof 默认的访问路径是/debug/pprof
 	pprof.Register(r)
 	//测试代码
