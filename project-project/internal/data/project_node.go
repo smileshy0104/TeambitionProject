@@ -13,7 +13,7 @@ type ProjectNode struct {
 }
 
 func (*ProjectNode) TableName() string {
-	return "ms_project_node"
+	return "project_node"
 }
 
 type ProjectNodeTree struct {

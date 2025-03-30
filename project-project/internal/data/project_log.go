@@ -23,7 +23,7 @@ type ProjectLog struct {
 }
 
 func (*ProjectLog) TableName() string {
-	return "ms_project_log"
+	return "project_log"
 }
 
 type ProjectLogDisplay struct {

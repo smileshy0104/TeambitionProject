@@ -19,7 +19,7 @@ type SourceLink struct {
 }
 
 func (*SourceLink) TableName() string {
-	return "ms_source_link"
+	return "source_link"
 }
 
 type SourceLinkDisplay struct {

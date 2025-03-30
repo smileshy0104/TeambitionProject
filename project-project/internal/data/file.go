@@ -21,5 +21,5 @@ type File struct {
 }
 
 func (*File) TableName() string {
-	return "ms_file"
+	return "file"
 }

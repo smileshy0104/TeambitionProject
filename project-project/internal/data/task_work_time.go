@@ -17,7 +17,7 @@ type TaskWorkTime struct {
 }
 
 func (*TaskWorkTime) TableName() string {
-	return "ms_task_work_time"
+	return "task_work_time"
 }
 
 // TaskWorkTimeDisplay  dto vo

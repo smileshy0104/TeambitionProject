@@ -18,7 +18,7 @@ type Department struct {
 }
 
 func (*Department) TableName() string {
-	return "ms_department"
+	return "department"
 }
 
 type DepartmentDisplay struct {

@@ -66,7 +66,7 @@ func (p *ProjectDao) UpdateDeletedProject(ctx context.Context, code int64, delet
 func (p *ProjectDao) FindProjectByPIdAndMemId(ctx context.Context, projectCode int64, memberId int64) (*data.ProjectAndMember, error) {
 	var pms *data.ProjectAndMember
 	session := p.conn.Session(ctx)
-	sql := fmt.Sprintf("select a.*,b.project_code,b.member_code,b.join_time,b.is_owner,b.authorize from ms_project a, ms_project_member b where a.id = b.project_code and b.member_code=? and b.project_code=? limit 1")
+	sql := fmt.Sprintf("select a.*,b.project_code,b.member_code,b.join_time,b.is_owner,b.authorize from ms_project a, project_member b where a.id = b.project_code and b.member_code=? and b.project_code=? limit 1")
 	raw := session.Raw(sql, memberId, projectCode)
 	err := raw.Scan(&pms).Error
 	return pms, err
@@ -108,11 +108,11 @@ func (p ProjectDao) FindProjectByMemId(ctx context.Context, memId int64, conditi
 	var pms []*data.ProjectAndMember
 	session := p.conn.Session(ctx)
 	index := (page - 1) * size
-	sql := fmt.Sprintf("select * from ms_project a, ms_project_member b where a.id = b.project_code and b.member_code=?  %s order by sort limit ?,?", condition)
+	sql := fmt.Sprintf("select * from ms_project a, project_member b where a.id = b.project_code and b.member_code=?  %s order by sort limit ?,?", condition)
 	raw := session.Raw(sql, memId, index, size)
 	raw.Scan(&pms)
 	var total int64
-	query := fmt.Sprintf("select count(*) from ms_project a, ms_project_member b where a.id = b.project_code and b.member_code=?  %s", condition)
+	query := fmt.Sprintf("select count(*) from ms_project a, project_member b where a.id = b.project_code and b.member_code=?  %s", condition)
 	tx := session.Raw(query, memId)
 	err := tx.Scan(&total).Error
 	return pms, total, err

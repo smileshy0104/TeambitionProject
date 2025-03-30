@@ -7,5 +7,5 @@ type ProjectAuthNode struct {
 }
 
 func (*ProjectAuthNode) TableName() string {
-	return "ms_project_auth_node"
+	return "project_auth_node"
 }

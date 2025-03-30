@@ -15,7 +15,7 @@ type MsTaskStagesTemplate struct {
 }
 
 func (*MsTaskStagesTemplate) TableName() string {
-	return "ms_task_stages_template"
+	return "task_stages_template"
 }
 
 type TaskStagesOnlyName struct {
@@ -69,7 +69,7 @@ type Task struct {
 }
 
 func (*Task) TableName() string {
-	return "ms_task"
+	return "task"
 }
 
 type TaskMember struct {
@@ -82,7 +82,7 @@ type TaskMember struct {
 }
 
 func (*TaskMember) TableName() string {
-	return "ms_task_member"
+	return "task_member"
 }
 
 const (
