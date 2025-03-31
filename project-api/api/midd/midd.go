@@ -3,7 +3,6 @@ package midd
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"net/http"
 	"project-api/api/rpc"
 	common "project-common"
@@ -77,18 +76,8 @@ func TokenVerify() func(*gin.Context) {
 
 		req := &login.LoginMessage{Token: token, Ip: ip}
 
-		// 创建注册消息实例，并将请求参数复制到消息中，准备调用GRPC服务
-		msg := &login.LoginMessage{}
-		// 使用Copier库将请求参数复制到消息中
-		err := copier.Copy(msg, req)
-		if err != nil {
-			// 如果复制失败，返回错误信息
-			c.JSON(http.StatusOK, result.Fail(http.StatusBadRequest, "copy有误"))
-			return
-		}
-
 		// 调用RPC服务进行Token验证
-		response, err := rpc.LoginServiceClient.TokenVerify(ctx, msg)
+		response, err := rpc.LoginServiceClient.TokenVerify(ctx, req)
 		if err != nil {
 			// 如果发生错误，解析gRPC错误并返回相应的错误信息
 			code, msg := errs.ParseGrpcError(err)

@@ -63,7 +63,7 @@ func (*HandlerUser) getCaptcha(ctx *gin.Context) {
 	defer cancel()
 
 	// 调用gRPC服务获取验证码。
-	rsp, err := LoginServiceClient.GetCaptcha(c, &login.CaptchaMessage{Mobile: mobile})
+	rsp, err := rpc.LoginServiceClient.GetCaptcha(c, &login.CaptchaMessage{Mobile: mobile})
 	if err != nil {
 		// 如果发生错误，解析gRPC错误以获取错误代码和消息。
 		code, msg := errs.ParseGrpcError(err)
@@ -112,7 +112,7 @@ func (u *HandlerUser) register(c *gin.Context) {
 	}
 
 	// 调用GRPC服务的Register方法，进行用户注册
-	_, err = LoginServiceClient.Register(ctx, msg)
+	_, err = rpc.LoginServiceClient.Register(ctx, msg)
 	if err != nil {
 		// 如果注册失败，解析GRPC错误并返回
 		code, msg := errs.ParseGrpcError(err)
@@ -154,7 +154,7 @@ func (u *HandlerUser) login(c *gin.Context) {
 	// TODO IP加入
 	msg.Ip = GetIp(c)
 	// 调用gRPC服务的Login方法进行登录，如果登录失败，则解析错误信息并返回
-	loginRsp, err := LoginServiceClient.Login(ctx, msg)
+	loginRsp, err := rpc.LoginServiceClient.Login(ctx, msg)
 	if err != nil {
 		code, msg := errs.ParseGrpcError(err)
 		c.JSON(http.StatusOK, result.Fail(code, msg))
@@ -187,17 +187,8 @@ func (u *HandlerUser) myOrgList(c *gin.Context) {
 
 	req := &login.UserMessage{MemId: memberId}
 
-	// 创建注册消息实例，并将请求参数复制到消息中，准备调用GRPC服务
-	msg := &login.UserMessage{}
-	// 使用Copier库将请求参数复制到消息中
-	err := copier.Copy(msg, req)
-	if err != nil {
-		// 如果复制失败，返回错误信息
-		c.JSON(http.StatusOK, result.Fail(http.StatusBadRequest, "copy有误"))
-		return
-	}
 	// 调用RPC服务，获取当前用户所在的组织列表。
-	list, err2 := rpc.LoginServiceClient.MyOrgList(context.Background(), msg)
+	list, err2 := rpc.LoginServiceClient.MyOrgList(context.Background(), req)
 	// 如果发生错误，解析gRPC错误并返回相应的错误响应。
 	if err2 != nil {
 		code, msg := errs.ParseGrpcError(err2)
