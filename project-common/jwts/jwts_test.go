@@ -3,6 +3,6 @@ package jwts
 import "testing"
 
 func TestParseToken(t *testing.T) {
-	tokenString := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzExMjcxOTEsInRva2VuIjoiMTAxNCJ9.nc-i2-36CIlkhTEzxV0L3JDUXVD68ASefnl33PU9PcE"
-	ParseToken(tokenString, "msproject,", "127.0.0.1")
+	tokenString := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQwMjczNzEsImlwIjoiMTI3LjAuMC4xIiwidG9rZW4iOiIxMDAxIn0.gPwT0v07YhmbHfhX0MPyT5Bmtd39ahzeVFJQ9rqbhb8"
+	ParseToken(tokenString, "msproject", "127.0.0.1")
 }

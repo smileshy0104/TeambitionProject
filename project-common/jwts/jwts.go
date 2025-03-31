@@ -101,36 +101,29 @@ func ParseTokenOld(tokenString string, secret string) (string, error) {
 //	string: 令牌的值
 //	error: 错误信息，如果有的话
 func ParseToken(tokenString string, secret string, ip string) (string, error) {
-	// 解析令牌
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// 验证令牌的签名方法
+		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		// 返回令牌的密钥
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return []byte(secret), nil
 	})
-	// 如果解析出错，返回错误信息
 	if err != nil {
 		return "", err
 	}
-
-	// 验证令牌的有效性
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		// 获取令牌的值和过期时间
 		val := claims["token"].(string)
 		exp := int64(claims["exp"].(float64))
-		// 如果令牌过期，返回错误信息
 		if exp <= time.Now().Unix() {
 			return "", errors.New("token过期了")
 		}
 		if claims["ip"] != ip {
 			return "", errors.New("ip不合法")
 		}
-		// 返回令牌的值
 		return val, nil
 	} else {
-		// 如果令牌无效，返回错误信息
 		return "", err
 	}
 }

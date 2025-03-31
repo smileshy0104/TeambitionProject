@@ -257,7 +257,7 @@ func (ls *LoginService) Login(ctx context.Context, msg *login.LoginMessage) (*lo
 // 该方法接收一个LoginMessage，其中包含用户提供的token信息
 // 它会解析token，验证其有效性，并从数据库中获取用户信息
 // 如果验证成功，返回包含用户信息的LoginResponse；如果失败，返回错误
-func (ls *LoginService) TokenVerifyOld(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
+func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
 	// 提取token信息，并处理带有bearer前缀的token
 	token := msg.Token
 	if strings.Contains(token, "bearer") {
@@ -305,7 +305,7 @@ func (ls *LoginService) TokenVerifyOld(ctx context.Context, msg *login.LoginMess
 // TokenVerify 验证用户登录状态（将token存入对应队列）
 // 该方法主要负责解析用户提供的Token，验证其有效性，并从缓存中获取用户信息和组织信息
 // 如果验证成功，返回用户相关信息；如果验证失败或信息过期，返回登录错误
-func (ls *LoginService) TokenVerify(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
+func (ls *LoginService) TokenVerifyOld(ctx context.Context, msg *login.LoginMessage) (*login.LoginResponse, error) {
 	// 提取Token，并处理带有bearer前缀的Token
 	token := msg.Token
 	if strings.Contains(token, "bearer") {
