@@ -57,6 +57,7 @@ func RegisterGrpc() *grpc.Server {
 			project.RegisterProjectServiceServer(g, project_service_v1.New())
 			//task.RegisterTaskServiceServer(g, task_service_v1.New())
 		}}
+	// 创建grpc服务——注册缓存
 	s := grpc.NewServer(interceptor.New().Cache())
 	c.RegisterFunc(s)
 	lis, err := net.Listen("tcp", c.Addr)
