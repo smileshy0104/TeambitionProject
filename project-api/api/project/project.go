@@ -62,9 +62,9 @@ func (p *HandlerProject) myProjectList(c *gin.Context) {
 	defer cancel()
 
 	// 从上下文中获取memberId
-	//memberIdStr, _ := c.Get("memberId")
-	//memberName := c.GetString("memberName")
-	//memberId := memberIdStr.(int64)
+	memberIdStr, _ := c.Get("memberId")
+	memberName := c.GetString("memberName")
+	memberId := memberIdStr.(int64)
 
 	// 绑定分页参数
 	page := &model.Page{}
@@ -73,11 +73,11 @@ func (p *HandlerProject) myProjectList(c *gin.Context) {
 
 	// 构建项目查询消息
 	msg := &project.ProjectRpcMessage{
-		//MemberId:   memberId,
-		//MemberName: memberName,
-		SelectBy: selectBy,
-		Page:     page.Page,
-		PageSize: page.PageSize,
+		MemberId:   memberId,
+		MemberName: memberName,
+		SelectBy:   selectBy,
+		Page:       page.Page,
+		PageSize:   page.PageSize,
 	}
 
 	// 调用gRPC服务获取项目列表

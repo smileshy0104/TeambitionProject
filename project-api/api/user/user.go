@@ -185,8 +185,19 @@ func (u *HandlerUser) myOrgList(c *gin.Context) {
 	// 将memberId转换为int64类型。
 	memberId := memberIdStr.(int64)
 
+	req := &login.UserMessage{MemId: memberId}
+
+	// 创建注册消息实例，并将请求参数复制到消息中，准备调用GRPC服务
+	msg := &login.UserMessage{}
+	// 使用Copier库将请求参数复制到消息中
+	err := copier.Copy(msg, req)
+	if err != nil {
+		// 如果复制失败，返回错误信息
+		c.JSON(http.StatusOK, result.Fail(http.StatusBadRequest, "copy有误"))
+		return
+	}
 	// 调用RPC服务，获取当前用户所在的组织列表。
-	list, err2 := rpc.LoginServiceClient.MyOrgList(context.Background(), &login.UserMessage{MemId: memberId})
+	list, err2 := rpc.LoginServiceClient.MyOrgList(context.Background(), msg)
 	// 如果发生错误，解析gRPC错误并返回相应的错误响应。
 	if err2 != nil {
 		code, msg := errs.ParseGrpcError(err2)

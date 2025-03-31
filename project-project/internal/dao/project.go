@@ -95,7 +95,7 @@ func (p ProjectDao) FindCollectProjectByMemId(ctx context.Context, memberId int6
 	var pms []*data.ProjectAndMember
 	session := p.conn.Session(ctx)
 	index := (page - 1) * size
-	sql := fmt.Sprintf("select * from project where id in (select project_code from project_collection where member_code=?) order by sort limit ?,?")
+	sql := fmt.Sprintf("select * from project where id in (select project_code from project_collection where member_code=?) order by id limit ?,?")
 	raw := session.Raw(sql, memberId, index, size)
 	raw.Scan(&pms)
 	var total int64
@@ -108,7 +108,7 @@ func (p ProjectDao) FindProjectByMemId(ctx context.Context, memId int64, conditi
 	var pms []*data.ProjectAndMember
 	session := p.conn.Session(ctx)
 	index := (page - 1) * size
-	sql := fmt.Sprintf("select * from project a, project_member b where a.id = b.project_code and b.member_code=?  %s order by sort limit ?,?", condition)
+	sql := fmt.Sprintf("select * from project a, project_member b where a.id = b.project_code and b.member_code=?  %s order by a.id limit ?,?", condition)
 	raw := session.Raw(sql, memId, index, size)
 	raw.Scan(&pms)
 	var total int64
