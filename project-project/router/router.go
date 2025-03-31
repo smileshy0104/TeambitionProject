@@ -8,11 +8,21 @@ import (
 	"net"
 	"project-common/discovery"
 	"project-common/logs"
+	"project-grpc/account"
+	"project-grpc/auth"
+	"project-grpc/department"
+	"project-grpc/menu"
 	"project-grpc/project"
+	"project-grpc/task"
 	"project-project/config"
 	"project-project/internal/interceptor"
 	"project-project/internal/rpc"
+	account_service_v1 "project-project/pkg/service/account.service.v1"
+	auth_service_v1 "project-project/pkg/service/auth.service.v1"
+	department_service_v1 "project-project/pkg/service/department.service.v1"
+	menu_service_v1 "project-project/pkg/service/menu.service.v1"
 	project_service_v1 "project-project/pkg/service/project.service.v1"
+	task_service_v1 "project-project/pkg/service/task.service.v1"
 )
 
 // Router 接口
@@ -55,7 +65,11 @@ func RegisterGrpc() *grpc.Server {
 		Addr: config.C.GC.Addr,
 		RegisterFunc: func(g *grpc.Server) {
 			project.RegisterProjectServiceServer(g, project_service_v1.New())
-			//task.RegisterTaskServiceServer(g, task_service_v1.New())
+			task.RegisterTaskServiceServer(g, task_service_v1.New())
+			account.RegisterAccountServiceServer(g, account_service_v1.New())
+			department.RegisterDepartmentServiceServer(g, department_service_v1.New())
+			auth.RegisterAuthServiceServer(g, auth_service_v1.New())
+			menu.RegisterMenuServiceServer(g, menu_service_v1.New())
 		}}
 	// 创建grpc服务——注册缓存
 	s := grpc.NewServer(interceptor.New().Cache())

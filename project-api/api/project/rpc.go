@@ -18,8 +18,8 @@ import (
 
 // ProjectServiceClient 是一个全局变量，用于存储项目服务的 gRPC 客户端实例。
 // 该客户端通过 InitRpcProjectClient 函数初始化，并在整个应用中使用。
-var ProjectServiceClient project.ProjectServiceClient
 var TaskServiceClient task.TaskServiceClient
+var ProjectServiceClient project.ProjectServiceClient
 var AccountServiceClient account.AccountServiceClient
 var DepartmentServiceClient department.DepartmentServiceClient
 var AuthServiceClient auth.AuthServiceClient
@@ -45,8 +45,8 @@ func InitRpcProjectClient() {
 		log.Fatalf("无法连接到服务: %v", err)
 	}
 	// 使用已建立的 gRPC 连接创建项目服务的客户端实例。
-	ProjectServiceClient = project.NewProjectServiceClient(conn)
 	TaskServiceClient = task.NewTaskServiceClient(conn)
+	ProjectServiceClient = project.NewProjectServiceClient(conn)
 	AccountServiceClient = account.NewAccountServiceClient(conn)
 	DepartmentServiceClient = department.NewDepartmentServiceClient(conn)
 	AuthServiceClient = auth.NewAuthServiceClient(conn)
