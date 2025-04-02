@@ -32,7 +32,7 @@ func (t *HandlerTask) taskStages(c *gin.Context) {
 	result := &common.Result{}
 
 	// 创建一个带有超时的context
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 1. 获取参数并校验参数的合法性
@@ -85,7 +85,7 @@ func (t *HandlerTask) memberProjectList(c *gin.Context) {
 	result := &common.Result{}
 
 	// 创建一个带有超时的上下文，以确保请求不会无限期地等待
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 1. 获取参数并校验参数的合法性
@@ -135,7 +135,7 @@ func (t *HandlerTask) taskList(c *gin.Context) {
 	stageCode := c.PostForm("stageCode")
 
 	// 创建一个带有超时的上下文，以确保请求不会无限期地等待。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 调用TaskServiceClient的服务获取任务列表。
@@ -183,7 +183,7 @@ func (t *HandlerTask) saveTask(c *gin.Context) {
 	c.ShouldBind(&req)
 
 	// 创建一个带有2秒超时的上下文，用于控制gRPC调用的最长执行时间。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 构建任务保存请求消息。
@@ -228,7 +228,7 @@ func (t *HandlerTask) taskSort(c *gin.Context) {
 	result := &common.Result{}
 	var req *tasks.TaskSortReq
 	c.ShouldBind(&req)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &task.TaskReqMessage{
 		PreTaskCode:  req.PreTaskCode,
@@ -251,7 +251,7 @@ func (t *HandlerTask) myTaskList(c *gin.Context) {
 	var req *tasks.MyTaskReq
 	c.ShouldBind(&req)
 	memberId := c.GetInt64("memberId")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &task.TaskReqMessage{
 		MemberId: memberId,
@@ -286,7 +286,7 @@ func (t *HandlerTask) myTaskList(c *gin.Context) {
 func (t *HandlerTask) readTask(c *gin.Context) {
 	result := &common.Result{}
 	taskCode := c.PostForm("taskCode")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &task.TaskReqMessage{
 		TaskCode: taskCode,
@@ -318,7 +318,7 @@ func (t *HandlerTask) listTaskMember(c *gin.Context) {
 	taskCode := c.PostForm("taskCode")
 	page := &model.Page{}
 	page.Bind(c)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &task.TaskReqMessage{
 		TaskCode: taskCode,
@@ -356,7 +356,7 @@ func (t *HandlerTask) taskLog(c *gin.Context) {
 	if req.PageSize <= 0 {
 		req.PageSize = 10
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 创建一个任务日志请求消息对象，并设置相关参数。
 	msg := &task.TaskReqMessage{
@@ -389,7 +389,7 @@ func (t *HandlerTask) taskLog(c *gin.Context) {
 func (t *HandlerTask) taskWorkTimeList(c *gin.Context) {
 	taskCode := c.PostForm("taskCode")
 	result := &common.Result{}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &task.TaskReqMessage{
 		TaskCode: taskCode,
@@ -415,7 +415,7 @@ func (t *HandlerTask) saveTaskWorkTime(c *gin.Context) {
 	result := &common.Result{}
 	var req *model.SaveTaskWorkTimeReq
 	c.ShouldBind(&req)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 创建一个任务工时请求消息对象，并设置相关参数。
 	msg := &task.TaskReqMessage{
@@ -498,7 +498,7 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 		}
 	}
 	//调用服务 存入file表
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 创建一个任务文件请求消息对象，并设置相关参数。
 	fileUrl := "http://localhost/" + key
@@ -537,7 +537,7 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 func (t *HandlerTask) taskSources(c *gin.Context) {
 	result := &common.Result{}
 	taskCode := c.PostForm("taskCode")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 调用 TaskServiceClient 的 TaskSources 方法获取任务来源。
 	sources, err := TaskServiceClient.TaskSources(ctx, &task.TaskReqMessage{TaskCode: taskCode})
@@ -559,7 +559,7 @@ func (t *HandlerTask) createComment(c *gin.Context) {
 	// 获取评论参数。
 	req := model.CommentReq{}
 	c.ShouldBind(&req)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &task.TaskReqMessage{
 		TaskCode:       req.TaskCode,

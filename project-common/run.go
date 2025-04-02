@@ -43,7 +43,7 @@ func Run(r *gin.Engine, srvName string, addr string, stop func()) {
 	log.Printf("Shutting Down project %s... \n", srvName)
 
 	// 创建一个带有超时的context，用于优雅地关闭服务
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 如果提供了清理函数，则执行清理函数
 	if stop != nil {

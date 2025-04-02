@@ -20,7 +20,7 @@ func (d *HandlerDepartment) department(c *gin.Context) {
 	result := &common.Result{}
 	var req *model.DepartmentReq
 	c.ShouldBind(&req)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &department.DepartmentReqMessage{
 		Page:                 req.Page,
@@ -51,7 +51,7 @@ func (d *HandlerDepartment) save(c *gin.Context) {
 	result := &common.Result{}
 	var req *model.DepartmentReq
 	c.ShouldBind(&req)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &department.DepartmentReqMessage{
 		Name:                 req.Name,
@@ -74,7 +74,7 @@ func (d *HandlerDepartment) save(c *gin.Context) {
 func (d *HandlerDepartment) read(c *gin.Context) {
 	result := &common.Result{}
 	departmentCode := c.PostForm("departmentCode")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &department.DepartmentReqMessage{
 		DepartmentCode:   departmentCode,

@@ -63,7 +63,7 @@ func (t *TaskService) TaskStages(co context.Context, msg *task.TaskReqMessage) (
 	page := msg.Page
 	pageSize := msg.PageSize
 	// 创建一个带有超时的上下文，以防止操作无限期阻塞
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 调用存储库方法获取任务阶段信息
@@ -104,7 +104,7 @@ func (t *TaskService) TaskStages(co context.Context, msg *task.TaskReqMessage) (
 // 最后组装并返回项目成员的详细信息列表。
 func (t *TaskService) MemberProjectList(co context.Context, msg *task.TaskReqMessage) (*task.MemberProjectResponse, error) {
 	// 1. 去 project_member表 去查询 用户id列表
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	projectCode := encrypts.DecryptNoErr(msg.ProjectCode)
 	// 查询项目成员信息通过项目code
@@ -160,7 +160,7 @@ func (t *TaskService) TaskList(ctx context.Context, msg *task.TaskReqMessage) (*
 	// 解密阶段代码
 	stageCode := encrypts.DecryptNoErr(msg.StageCode)
 	// 创建一个带有超时的上下文，以防止长时间运行的任务导致服务阻塞
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 根据阶段代码查询任务列表
 	taskList, err := t.taskRepo.FindTaskByStageCode(c, int(stageCode))
@@ -356,7 +356,7 @@ func (t *TaskService) TaskSort(ctx context.Context, msg *task.TaskReqMessage) (*
 // sortTask 对任务进行排序，根据指定的前一个任务和目标阶段重新安排任务的顺序。
 func (t *TaskService) sortTask(preTaskCode int64, nextTaskCode string, toStageCode int64) error {
 	// 创建一个带有超时的context，以防止排序操作无限期地执行。
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 查找前一个任务，以便获取其排序信息。
@@ -521,7 +521,7 @@ func (t *TaskService) MyTaskList(ctx context.Context, msg *task.TaskReqMessage) 
 func (t *TaskService) ReadTask(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskMessage, error) {
 	// 根据taskCode查询任务详情 根据任务查询项目详情 根据任务查询任务步骤详情 查询任务的执行者的成员详情
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 查询任务详情
 	taskInfo, err := t.taskRepo.FindTaskById(c, taskCode)
@@ -574,7 +574,7 @@ func (t *TaskService) ReadTask(ctx context.Context, msg *task.TaskReqMessage) (*
 func (t *TaskService) ListTaskMember(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskMemberList, error) {
 	//查询 task member表 根据memberCode去查询用户信息
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 查询任务成员列表
 	taskMemberPage, total, err := t.taskRepo.FindTaskMemberPage(c, taskCode, msg.Page, msg.PageSize)
@@ -613,7 +613,7 @@ func (t *TaskService) ListTaskMember(ctx context.Context, msg *task.TaskReqMessa
 func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskLogList, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
 	all := msg.All
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 查询任务日志
 	var list []*data.ProjectLog
@@ -671,7 +671,7 @@ func (t *TaskService) TaskLog(ctx context.Context, msg *task.TaskReqMessage) (*t
 // TaskWorkTimeList 获取任务工时
 func (t *TaskService) TaskWorkTimeList(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskWorkTimeResponse, error) {
 	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var list []*data.TaskWorkTime
 	var err error
@@ -722,7 +722,7 @@ func (t *TaskService) SaveTaskWorkTime(ctx context.Context, msg *task.TaskReqMes
 	tmt.Content = msg.Content
 	tmt.TaskCode = encrypts.DecryptNoErr(msg.TaskCode)
 	tmt.MemberCode = msg.MemberId
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 调用 TaskWorkTimeRepo 的 Save 方法保存任务工时。
 	err := t.taskWorkTimeRepo.Save(c, tmt)

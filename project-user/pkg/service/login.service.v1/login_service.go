@@ -65,7 +65,7 @@ func (ls *LoginService) GetCaptcha(ctx context.Context, msg *login.CaptchaMessag
 		zap.L().Info("短信平台调用成功，发送短信")
 		//redis 假设后续缓存可能存在mysql当中，也可能存在mongo当中 也可能存在memcache当中
 		//5.存储验证码 redis当中 过期时间15分钟
-		c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		// 将对应的验证码存储到 Redis 中，并设置过期时间为 15 分钟。
 		err := ls.cache.Put(c, model.RegisterRedisKey+mobile, code, 15*time.Minute)

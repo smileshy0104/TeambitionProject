@@ -23,7 +23,7 @@ func (a *HandlerAccount) account(c *gin.Context) {
 	_ = c.ShouldBind(&req)
 	// 获取当前登录用户id
 	memberId := c.GetInt64("memberId")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 调用project模块 查询账户列表
 	msg := &account.AccountReqMessage{

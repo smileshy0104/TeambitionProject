@@ -19,7 +19,7 @@ func NewUserRpcDomain() *UserRpcDomain {
 
 // MemberList 根据成员id列表获取成员信息
 func (d *UserRpcDomain) MemberList(mIdList []int64) ([]*login.MemberMessage, map[int64]*login.MemberMessage, error) {
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	messageList, err := d.lc.FindMemInfoByIds(c, &login.UserMessage{MIds: mIdList})
 	mMap := make(map[int64]*login.MemberMessage)
@@ -31,7 +31,7 @@ func (d *UserRpcDomain) MemberList(mIdList []int64) ([]*login.MemberMessage, map
 
 // MemberInfo 根据成员id获取成员信息
 func (d *UserRpcDomain) MemberInfo(ctx context.Context, memberCode int64) (*login.MemberMessage, error) {
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	memberMessage, err := d.lc.FindMemInfoById(c, &login.UserMessage{MemId: memberCode})
 	return memberMessage, err

@@ -26,7 +26,7 @@ func (m HandlerMenu) menuList(c *gin.Context) {
 
 	// 创建一个带有超时的上下文，以确保gRPC调用不会无限期地等待。
 	// 这里设置超时时间为2秒。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	// 延迟执行cancel函数，以确保在函数退出时取消上下文。
 	defer cancel()
 

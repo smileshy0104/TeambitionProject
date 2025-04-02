@@ -15,7 +15,7 @@ type MenuDomain struct {
 }
 
 func (d *MenuDomain) MenuTreeList() ([]*data.ProjectMenuChild, *errs.BError) {
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	menus, err := d.menuRepo.FindMenus(c)
 	if err != nil {

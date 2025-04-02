@@ -30,7 +30,7 @@ func (a *HandlerAuth) authList(c *gin.Context) {
 	page.Bind(c)
 
 	// 创建一个带有超时的上下文，以确保请求不会无限期地等待。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 构造授权请求消息。
@@ -86,7 +86,7 @@ func (a *HandlerAuth) apply(c *gin.Context) {
 	}
 
 	// 创建一个带有超时的上下文，用于控制后续操作的执行时间。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 构建权限请求消息。
@@ -133,7 +133,7 @@ func (a *HandlerAuth) GetAuthNodes(c *gin.Context) ([]string, error) {
 	}
 
 	// 创建一个带有2秒超时的上下文，以防止长时间运行的请求
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel() // 确保在函数退出时取消上下文
 
 	// 调用gRPC服务，获取成员的授权节点列表

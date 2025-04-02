@@ -29,7 +29,7 @@ func (ps *ProjectService) UpdateCollectProject(ctx context.Context, msg *project
 	// 将解密后的项目代码字符串转换为int64类型。
 	projectCode, _ := strconv.ParseInt(projectCodeStr, 10, 64)
 	// 创建一个带有超时的上下文，用于控制后续操作不超过2秒。
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel() // 确保在函数退出时取消上下文。
 
 	var err error

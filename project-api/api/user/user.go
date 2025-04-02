@@ -59,7 +59,7 @@ func (*HandlerUser) getCaptcha(ctx *gin.Context) {
 	mobile := ctx.PostForm("mobile")
 
 	// 创建一个带有超时的context，以确保操作不会无限期地进行。
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 调用gRPC服务获取验证码。
@@ -98,7 +98,7 @@ func (u *HandlerUser) register(c *gin.Context) {
 	}
 
 	// 创建一个带有超时的context，用于调用GRPC服务
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 创建注册消息实例，并将请求参数复制到消息中，准备调用GRPC服务
@@ -141,7 +141,7 @@ func (u *HandlerUser) login(c *gin.Context) {
 
 	//2.调用user grpc 完成登录
 	// 创建一个带有超时的上下文，以防止登录请求处理时间过长
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 初始化登录消息对象，用于调用gRPC服务
 	msg := &login.LoginMessage{}

@@ -23,7 +23,7 @@ type ProjectAuthDomain struct {
 
 // AuthList 查询权限列表
 func (d *ProjectAuthDomain) AuthList(orgCode int64) ([]*data.ProjectAuthDisplay, *errs.BError) {
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 查询权限列表
 	list, err := d.projectAuthRepo.FindAuthList(c, orgCode)
@@ -41,7 +41,7 @@ func (d *ProjectAuthDomain) AuthList(orgCode int64) ([]*data.ProjectAuthDisplay,
 
 // AuthListPage 分页查询
 func (d *ProjectAuthDomain) AuthListPage(orgCode int64, page int64, pageSize int64) ([]*data.ProjectAuthDisplay, int64, *errs.BError) {
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	list, total, err := d.projectAuthRepo.FindAuthListPage(c, orgCode, page, pageSize)
 	if err != nil {
@@ -85,7 +85,7 @@ func (d *ProjectAuthDomain) AuthNodes(memberId int64) ([]string, *errs.BError) {
 	if account == nil {
 		return nil, model.ParamsError
 	}
-	//c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	//c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	//defer cancel()
 	authorize := account.Authorize
 	authId, _ := strconv.ParseInt(authorize, 10, 64)

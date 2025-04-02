@@ -40,7 +40,7 @@ func (d *AccountDomain) AccountList(
 	default:
 		condition = "status = 1"
 	}
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	list, total, err := d.accountRepo.FindList(c, condition, organizationCodeId, departmentCodeId, page, pageSize)
 	if err != nil {

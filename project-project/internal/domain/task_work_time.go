@@ -24,7 +24,7 @@ func NewTaskWorkTimeDomain() *TaskWorkTimeDomain {
 }
 
 func (d *TaskWorkTimeDomain) TaskWorkTimeList(taskCode int64) ([]*data.TaskWorkTimeDisplay, *errs.BError) {
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var list []*data.TaskWorkTime
 	var err error

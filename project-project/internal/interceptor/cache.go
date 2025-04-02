@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"project-common/encrypts"
-	"project-grpc/project"
 	"project-project/internal/dao"
 	"project-project/internal/repo"
 	"time"
@@ -32,7 +31,7 @@ func New() *CacheInterceptor {
 	cacheMap := make(map[string]any)
 	// 可以在此处添加更多的方法和对应的响应类型
 	// 例如：cacheMap["/project.service.v1.ProjectService/FindProjectByMemId"] = &project.MyProjectResponse{}
-	cacheMap["/project.service.v1.ProjectService/FindProjectByMemId"] = &project.MyProjectResponse{}
+	//cacheMap["/project.service.v1.ProjectService/FindProjectByMemId"] = &project.MyProjectResponse{}
 	return &CacheInterceptor{cache: dao.Rc, cacheMap: cacheMap}
 }
 
@@ -47,7 +46,7 @@ func (c *CacheInterceptor) Cache() grpc.ServerOption {
 		}
 
 		// 创建一个带有超时的上下文，防止缓存操作阻塞过久
-		con, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		con, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		// 生成缓存键

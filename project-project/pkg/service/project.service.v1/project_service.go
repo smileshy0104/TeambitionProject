@@ -274,7 +274,7 @@ func (ps *ProjectService) FindProjectDetail(ctx context.Context, msg *project.Pr
 	memberId := msg.MemberId
 
 	// 创建一个带有超时的上下文，以防止长时间运行的查询导致系统资源耗尽。
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 查询项目和成员的详细信息。
@@ -332,7 +332,7 @@ func (ps *ProjectService) UpdateDeletedProject(ctx context.Context, msg *project
 	// 将解密后的项目代码字符串转换为整数类型。
 	projectCode, _ := strconv.ParseInt(projectCodeStr, 10, 64)
 	// 创建一个带有超时的context，以确保数据库操作不会无限期地等待。
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 调用项目仓库的UpdateDeletedProject方法更新数据库中的项目删除状态。
 	err := ps.projectRepo.UpdateDeletedProject(c, projectCode, msg.Deleted)
@@ -355,7 +355,7 @@ func (ps *ProjectService) UpdateProject(ctx context.Context, msg *project.Update
 	// 将解密后的项目代码解析为int64类型
 	projectCode, _ := strconv.ParseInt(projectCodeStr, 10, 64)
 	// 创建一个带有超时的context，以防止更新操作长时间运行
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 创建一个Project实例，填充从消息中获取的更新信息
 	proj := &data.Project{
@@ -450,7 +450,7 @@ func (ps *ProjectService) FindProjectByMemberId(ctx context.Context, msg *projec
 		taskId = encrypts.DecryptNoErr(msg.TaskCode)
 		isTaskCode = true
 	}
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if !isProjectCode && isTaskCode {
 		projectCode, ok, bError := ps.taskDomain.FindProjectIdByTaskId(taskId)

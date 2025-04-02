@@ -33,7 +33,7 @@ func TokenVerifyOld() func(*gin.Context) {
 
 		// 2. 调用user服务进行Token认证
 		// 创建一个带有超时的context，以防止请求等待时间过长
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancelFunc() // 确保在函数退出时取消context
 
 		// 调用RPC服务进行Token验证
@@ -69,7 +69,7 @@ func TokenVerify() func(*gin.Context) {
 
 		// 2. 调用user服务进行Token认证
 		// 创建一个带有超时的context，以防止请求等待时间过长
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancelFunc() // 确保在函数退出时取消context
 		// TODO 将Ip加入Token中，保证Token的安全性
 		ip := GetIp(c)

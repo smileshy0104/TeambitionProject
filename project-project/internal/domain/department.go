@@ -16,7 +16,7 @@ type DepartmentDomain struct {
 
 // FindDepartmentById 根据id查询部门信息
 func (d *DepartmentDomain) FindDepartmentById(id int64) (*data.Department, *errs.BError) {
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 调用repo的FindDepartmentById方法查询部门信息。
 	dp, err := d.departmentRepo.FindDepartmentById(c, id)
@@ -47,7 +47,7 @@ func (d *DepartmentDomain) Save(
 	parentDepartmentCode int64,
 	name string) (*data.DepartmentDisplay, *errs.BError) {
 
-	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 调用repo的FindDepartment方法查询部门信息。
 	dpm, err := d.departmentRepo.FindDepartment(c, organizationCode, parentDepartmentCode, name)

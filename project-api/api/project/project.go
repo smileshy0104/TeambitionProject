@@ -29,7 +29,7 @@ func (p *HandlerProject) index(c *gin.Context) {
 
 	// 创建一个带有超时的上下文，以确保请求不会无限期地等待。
 	// 这里设置超时时间为2秒。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	// 延迟取消上下文，以确保在函数退出时清理资源。
 	defer cancel()
 
@@ -58,7 +58,7 @@ func (p *HandlerProject) myProjectList(c *gin.Context) {
 	result := &common.Result{}
 
 	// 1. 获取参数
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 从上下文中获取memberId
@@ -116,7 +116,7 @@ func (p *HandlerProject) projectTemplate(c *gin.Context) {
 	result := &common.Result{}
 
 	// 创建上下文并设置超时时间，确保 RPC 调用不会无限期等待。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// 从 gin.Context 中提取用户相关的参数：memberId 和 memberName。
@@ -178,7 +178,7 @@ func (p *HandlerProject) projectSave(c *gin.Context) {
 	result := &common.Result{}
 
 	// 1. 获取参数
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	memberId := c.GetInt64("memberId")
 	organizationCode := c.GetString("organizationCode")
@@ -223,7 +223,7 @@ func (p *HandlerProject) readProject(c *gin.Context) {
 	memberId := c.GetInt64("memberId")
 
 	// 创建一个带有超时的上下文，以确保请求不会无限期地等待
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel() // 确保在函数退出时取消上下文
 
 	// 调用项目服务客户端的FindProjectDetail方法获取项目详细信息
@@ -255,7 +255,7 @@ func (p *HandlerProject) recycleProject(c *gin.Context) {
 	projectCode := c.PostForm("projectCode")
 
 	// 创建一个带有超时的上下文，以确保 gRPC 调用不会无限期地等待。
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel() // 确保在函数退出时取消上下文。
 
 	// 调用 gRPC 服务，将项目标记为删除。
@@ -277,7 +277,7 @@ func (p *HandlerProject) recycleProject(c *gin.Context) {
 func (p *HandlerProject) recoveryProject(c *gin.Context) {
 	result := &common.Result{}
 	projectCode := c.PostForm("projectCode")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_, err := ProjectServiceClient.UpdateDeletedProject(ctx, &project.ProjectRpcMessage{ProjectCode: projectCode, Deleted: false})
 	if err != nil {
@@ -295,7 +295,7 @@ func (p *HandlerProject) collectProject(c *gin.Context) {
 	projectCode := c.PostForm("projectCode")
 	collectType := c.PostForm("type")
 	memberId := c.GetInt64("memberId")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_, err := ProjectServiceClient.UpdateCollectProject(ctx, &project.ProjectRpcMessage{ProjectCode: projectCode, CollectType: collectType, MemberId: memberId})
 	if err != nil {
@@ -313,7 +313,7 @@ func (p *HandlerProject) editProject(c *gin.Context) {
 	var req *pro.ProjectReq
 	_ = c.ShouldBind(&req)
 	memberId := c.GetInt64("memberId")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &project.UpdateProjectMessage{}
 	copier.Copy(msg, req)
@@ -331,7 +331,7 @@ func (p *HandlerProject) getLogBySelfProject(c *gin.Context) {
 	result := &common.Result{}
 	var page = &model.Page{}
 	page.Bind(c)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 创建一个 gRPC 消息，用于传递分页信息。
 	msg := &project.ProjectRpcMessage{
@@ -356,7 +356,7 @@ func (p *HandlerProject) getLogBySelfProject(c *gin.Context) {
 
 func (p *HandlerProject) nodeList(c *gin.Context) {
 	result := &common.Result{}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	response, err := ProjectServiceClient.NodeList(ctx, &project.ProjectRpcMessage{})
 	if err != nil {
@@ -371,7 +371,7 @@ func (p *HandlerProject) nodeList(c *gin.Context) {
 }
 
 func (p *HandlerProject) FindProjectByMemberId(memberId int64, projectCode string, taskCode string) (*pro.Project, bool, bool, *errs.BError) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	msg := &project.ProjectRpcMessage{
 		MemberId:    memberId,
