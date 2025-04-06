@@ -43,6 +43,7 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group.POST("/project_member/index", t.memberProjectList) // memberProjectList 查询项目成员列表。
 	group.POST("/task_stages/tasks", t.taskList)             // taskList 查找对应的任务列表。
 	group.POST("/task/save", t.saveTask)                     // saveTask 保存任务。
+	group.POST("/task/edit", t.editTask)                     // saveTask 保存任务。
 	group.POST("/task/sort", t.taskSort)                     // taskSort 任务排序。
 	group.POST("/task/selfList", t.myTaskList)               // myTaskList 获取用户自身任务列表请求
 

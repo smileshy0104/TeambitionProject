@@ -280,6 +280,7 @@ service TaskService {
   rpc MemberProjectList(TaskReqMessage) returns (MemberProjectResponse){}
   rpc TaskList(TaskReqMessage) returns (TaskListResponse){}
   rpc SaveTask(TaskReqMessage) returns(TaskMessage){}
+  rpc EditTask(TaskReqMessage) returns(TaskMessage){}
   rpc TaskSort(TaskReqMessage) returns (TaskSortResponse){}
   rpc MyTaskList(TaskReqMessage) returns (MyTaskListResponse){}
   rpc ReadTask(TaskReqMessage) returns (TaskMessage){}

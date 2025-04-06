@@ -221,6 +221,54 @@ func (t *HandlerTask) saveTask(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Success(td))
 }
 
+// editTask 修改任务信息。
+// 该方法首先绑定请求参数，然后通过gRPC调用任务保存服务。
+// 参数: c *gin.Context - Gin框架的上下文，用于处理HTTP请求和响应。
+func (t *HandlerTask) editTask(c *gin.Context) {
+	result := &common.Result{}
+	var req *tasks.TaskSaveReq
+
+	// 绑定请求参数到req对象。
+	c.ShouldBind(&req)
+
+	// 创建一个带有2秒超时的上下文，用于控制gRPC调用的最长执行时间。
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 构建任务保存请求消息。
+	msg := &task.TaskReqMessage{
+		ProjectCode: req.ProjectCode,
+		Name:        req.Name,
+		AssignTo:    req.AssignTo,
+		MemberId:    c.GetInt64("memberId"),
+	}
+
+	// 调用gRPC服务保存任务，并处理错误。
+	taskMessage, err := TaskServiceClient.EditTask(ctx, msg)
+	if err != nil {
+		code, msg := errs.ParseGrpcError(err)
+		c.JSON(http.StatusOK, result.Fail(code, msg))
+		return
+	}
+
+	// 创建一个任务显示对象，并将gRPC响应数据复制到该对象中。
+	td := &tasks.TaskDisplay{}
+	copier.Copy(td, taskMessage)
+
+	// 确保任务显示对象中的Tags和ChildCount字段不为空。
+	if td != nil {
+		if td.Tags == nil {
+			td.Tags = []int{}
+		}
+		if td.ChildCount == nil {
+			td.ChildCount = []int{}
+		}
+	}
+
+	// 返回保存成功的结果。
+	c.JSON(http.StatusOK, result.Success(td))
+}
+
 // taskSort 处理任务排序请求。
 // 该函数接收一个 gin.Context 参数，从中解析任务排序请求信息，并调用 TaskServiceClient 的 TaskSort 方法进行处理。
 // 如果处理成功，返回成功结果；如果处理失败，解析错误并返回错误信息。

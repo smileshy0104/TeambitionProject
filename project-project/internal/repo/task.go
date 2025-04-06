@@ -52,6 +52,9 @@ type TaskRepo interface {
 	// SaveTask 保存任务
 	SaveTask(ctx context.Context, conn database.DbConn, ts *data.Task) error
 
+	// EditTask 修改任务
+	EditTask(ctx context.Context, conn database.DbConn, ts *data.Task, taskCode int64) error
+
 	// SaveTaskMember 保存任务成员
 	SaveTaskMember(ctx context.Context, conn database.DbConn, tm *data.TaskMember) error
 

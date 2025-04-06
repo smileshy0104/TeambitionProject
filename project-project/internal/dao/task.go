@@ -102,6 +102,16 @@ func (t *TaskDao) SaveTask(ctx context.Context, conn database.DbConn, ts *data.T
 	return err
 }
 
+// EditTask 修改任务
+func (t *TaskDao) EditTask(ctx context.Context, conn database.DbConn, ts *data.Task, taskCode int64) error {
+	t.conn = conn.(*gorms.GormConn)
+	err := t.conn.Tx(ctx).
+		Where("id=?", taskCode).
+		Updates(&ts).
+		Error
+	return err
+}
+
 // SaveTaskMember 保存任务成员
 func (t *TaskDao) SaveTaskMember(ctx context.Context, conn database.DbConn, tm *data.TaskMember) error {
 	t.conn = conn.(*gorms.GormConn)

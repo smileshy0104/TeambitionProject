@@ -334,6 +334,93 @@ func (t *TaskService) SaveTask(ctx context.Context, msg *task.TaskReqMessage) (*
 	return tm, nil
 }
 
+// EditTask 修改任务信息，包括任务的基本信息、分配信息等。
+func (t *TaskService) EditTask(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskMessage, error) {
+	//1. 检查业务逻辑
+	if msg.Name == "" {
+		return nil, errs.GrpcError(model.TaskNameNotNull)
+	}
+	stageCode := encrypts.DecryptNoErr(msg.StageCode)
+	taskCode := encrypts.DecryptNoErr(msg.TaskCode)
+	taskStages, err := t.taskStagesRepo.FindById(ctx, int(stageCode))
+	if err != nil {
+		zap.L().Error("project task SaveTask taskStagesRepo.FindById error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if taskStages == nil {
+		return nil, errs.GrpcError(model.TaskStagesNotNull)
+	}
+	projectCode := encrypts.DecryptNoErr(msg.ProjectCode)
+	// 查询项目信息
+	project, err := t.projectRepo.FindProjectById(ctx, projectCode)
+	if err != nil {
+		zap.L().Error("project task SaveTask projectRepo.FindProjectById error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if project == nil || project.Deleted == model.Deleted {
+		return nil, errs.GrpcError(model.ProjectAlreadyDeleted)
+	}
+	// 查询当前项目下的最大任务编号和最大任务排序号
+	maxIdNum, err := t.taskRepo.FindTaskMaxIdNum(ctx, projectCode)
+	if err != nil {
+		zap.L().Error("project task SaveTask taskRepo.FindTaskMaxIdNum error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if maxIdNum == nil {
+		a := 0
+		maxIdNum = &a
+	}
+	// 查询当前阶段下的最大任务排序号
+	maxSort, err := t.taskRepo.FindTaskSort(ctx, projectCode, stageCode)
+	if err != nil {
+		zap.L().Error("project task SaveTask taskRepo.FindTaskSort error", zap.Error(err))
+		return nil, errs.GrpcError(model.DBError)
+	}
+	if maxSort == nil {
+		a := 0
+		maxSort = &a
+	}
+	assignTo := encrypts.DecryptNoErr(msg.AssignTo)
+	ts := &data.Task{
+		Name:        msg.Name,
+		CreateTime:  time.Now().UnixMilli(),
+		CreateBy:    msg.MemberId,
+		AssignTo:    assignTo,
+		ProjectCode: projectCode,
+		StageCode:   int(stageCode),
+		IdNum:       *maxIdNum + 1,
+		Private:     project.OpenTaskPrivate,
+		Sort:        *maxSort + 65536,
+		BeginTime:   time.Now().UnixMilli(),
+		EndTime:     time.Now().Add(2 * 24 * time.Hour).UnixMilli(),
+	}
+	err = t.transaction.Action(func(conn database.DbConn) error {
+		err = t.taskRepo.EditTask(ctx, conn, ts, taskCode)
+		if err != nil {
+			zap.L().Error("project task SaveTask taskRepo.SaveTask error", zap.Error(err))
+			return errs.GrpcError(model.DBError)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	display := ts.ToTaskDisplay()
+	member, err := rpc.LoginServiceClient.FindMemInfoById(ctx, &login.UserMessage{MemId: assignTo})
+	if err != nil {
+		return nil, err
+	}
+	display.Executor = data.Executor{
+		Name:   member.Name,
+		Avatar: member.Avatar,
+		Code:   member.Code,
+	}
+	tm := &task.TaskMessage{}
+	copier.Copy(tm, display)
+	return tm, nil
+}
+
 // TaskSort 负责处理任务排序请求。
 // 该函数接收一个上下文和一个任务请求消息，然后根据消息中的信息对任务进行排序。
 func (t *TaskService) TaskSort(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskSortResponse, error) {
