@@ -58,6 +58,15 @@ type TaskSaveReq struct {
 	AssignTo    string `form:"assign_to"`
 }
 
+type TaskEditReq struct {
+	Name        string `form:"name"`
+	TaskCode    string `form:"taskCode"`
+	Pri         int    `form:"pri"`
+	Description string `form:"description"`
+	EndTime     string `form:"end_time"`
+	AssignTo    string `form:"assign_to"`
+}
+
 type TaskSortReq struct {
 	PreTaskCode  string `form:"preTaskCode"`
 	NextTaskCode string `form:"nextTaskCode"`

@@ -23,6 +23,7 @@ message TaskReqMessage {
   int64 beginTime = 18;
   string commentContent = 19;
   repeated string Mentions = 20;
+  int32 pri = 21;
 }
 
 message TaskStagesMessage{
