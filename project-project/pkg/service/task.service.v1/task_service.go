@@ -216,6 +216,9 @@ func (t *TaskService) TaskList(ctx context.Context, msg *task.TaskReqMessage) (*
 	// 为每个任务设置执行人信息
 	for _, v := range taskDisplayList {
 		// 从成员信息映射中获取执行人信息
+		if memberMap[encrypts.DecryptNoErr(v.AssignTo)] == nil {
+			continue
+		}
 		message := memberMap[encrypts.DecryptNoErr(v.AssignTo)]
 		e := data.Executor{
 			Name:   message.Name,
@@ -599,6 +602,9 @@ func (t *TaskService) ListTaskMember(ctx context.Context, msg *task.TaskReqMessa
 		tm := &task.TaskMemberMessage{}
 		tm.Code = encrypts.EncryptNoErr(v.MemberCode)
 		tm.Id = v.Id
+		if mMap[v.MemberCode] == nil {
+			continue
+		}
 		message := mMap[v.MemberCode]
 		tm.Name = message.Name
 		tm.Avatar = message.Avatar
