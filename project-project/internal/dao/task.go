@@ -46,13 +46,13 @@ func (t *TaskDao) FindTaskByAssignTo(ctx context.Context, memberId int64, done i
 func (t *TaskDao) FindTaskByMemberCode(ctx context.Context, memberId int64, done int, page int64, size int64) (tList []*data.Task, total int64, err error) {
 	session := t.conn.Session(ctx)
 	offset := (page - 1) * size
-	sql := "select a.* from ms_task a,ms_task_member b where a.id=b.task_code and member_code=? and a.deleted=0 and a.done=? limit ?,?"
+	sql := "select a.* from task a,task_member b where a.id=b.task_code and member_code=? and a.deleted=0 and a.done=? limit ?,?"
 	raw := session.Model(&data.Task{}).Raw(sql, memberId, done, offset, size)
 	err = raw.Scan(&tList).Error
 	if err != nil {
 		return nil, 0, err
 	}
-	sqlCount := "select count(*) from ms_task a,ms_task_member b where a.id=b.task_code and member_code=? and a.deleted=0 and a.done=?"
+	sqlCount := "select count(*) from task a,task_member b where a.id=b.task_code and member_code=? and a.deleted=0 and a.done=?"
 	rawCount := session.Model(&data.Task{}).Raw(sqlCount, memberId, done)
 	err = rawCount.Scan(&total).Error
 	return
