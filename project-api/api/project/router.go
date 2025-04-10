@@ -57,7 +57,7 @@ func (*RouterProject) Route(r *gin.Engine) {
 	group.POST("/task/createComment", t.createComment)        // createComment 创建评论。
 
 	a := NewAccount()
-	group.POST("/account", a.account)
+	group.POST("/account", a.account) //account 获取用户信息。
 	d := NewDepartment()
 	group.POST("/department", d.department)
 	group.POST("/department/save", d.save)

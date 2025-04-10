@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"project-common/business"
 	"project-common/encrypts"
 	"project-common/errs"
 	"project-project/internal/dao"
@@ -26,8 +27,9 @@ func (d *AccountDomain) AccountList(
 	departmentCode string,
 	searchType int32) ([]*data.MemberAccountDisplay, int64, *errs.BError) {
 	condition := ""
-	organizationCodeId := encrypts.DecryptNoErr(organizationCode)
+	organizationCodeId, _ := business.StringToInt32(organizationCode)
 	departmentCodeId := encrypts.DecryptNoErr(departmentCode)
+	// 搜索类型判断
 	switch searchType {
 	case 1:
 		condition = "status = 1"
@@ -42,7 +44,7 @@ func (d *AccountDomain) AccountList(
 	}
 	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	list, total, err := d.accountRepo.FindList(c, condition, organizationCodeId, departmentCodeId, page, pageSize)
+	list, total, err := d.accountRepo.FindList(c, condition, int64(organizationCodeId), departmentCodeId, page, pageSize)
 	if err != nil {
 		return nil, 0, model.DBError
 	}

@@ -3,7 +3,7 @@ package account_service_v1
 import (
 	"context"
 	"github.com/jinzhu/copier"
-	"project-common/encrypts"
+	"project-common/business"
 	"project-common/errs"
 	"project-grpc/account"
 	"project-project/internal/dao"
@@ -45,7 +45,8 @@ func (a *AccountService) Account(ctx context.Context, msg *account.AccountReqMes
 		return nil, errs.GrpcError(err)
 	}
 	// 获取权限列表
-	authList, err := a.projectAuthDomain.AuthList(encrypts.DecryptNoErr(msg.OrganizationCode))
+	organizationCodeId, _ := business.StringToInt32(msg.OrganizationCode)
+	authList, err := a.projectAuthDomain.AuthList(int64(organizationCodeId))
 	if err != nil {
 		return nil, errs.GrpcError(err)
 	}
