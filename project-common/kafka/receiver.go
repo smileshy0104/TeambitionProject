@@ -59,7 +59,7 @@ func GetReader(brokers []string, groupId, topic string) *KafkaReader {
 	k := &KafkaReader{R: r}
 
 	// 启动一个goroutine异步读取消息，保持消费者活跃。
-	//go k.readMsg()
+	go k.readMsg()
 
 	// 返回KafkaReader实例的指针。
 	return k
