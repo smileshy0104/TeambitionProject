@@ -7,7 +7,10 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+	github.com/segmentio/kafka-go v0.4.48 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.19 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.19 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.19 // indirect
