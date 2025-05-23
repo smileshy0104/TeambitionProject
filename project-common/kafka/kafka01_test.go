@@ -12,14 +12,14 @@ func TestProducer01(t *testing.T) {
 	m["projectCode"] = "1200"
 	bytes, _ := json.Marshal(m)
 	w.Send(LogData{
-		Topic: "log",
+		Topic: "msproject_log",
 		Data:  bytes,
 	})
 	time.Sleep(2 * time.Second)
 }
 
 func TestConsumer01(t *testing.T) {
-	GetReader([]string{"localhost:9092"}, "group1", "log")
+	GetReader([]string{"localhost:9092"}, "group1", "msproject_log")
 	for {
 
 	}
