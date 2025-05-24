@@ -53,25 +53,25 @@ func (c *MinioClient) Put(ctx context.Context, bucketName string, fileName strin
 //
 //	minio.UploadInfo: 合并后的对象信息
 //	error: 错误信息，如果合并过程中发生错误
-func (c *MinioClient) Compose(
-	ctx context.Context,
-	bucketName string,
-	fileName string,
-	totalChunks int,
-) (minio.UploadInfo, error) {
+func (c *MinioClient) Compose(ctx context.Context, bucketName string, fileName string, totalChunks int) (minio.UploadInfo, error) {
+	// 创建一个CopyDestOptions实例，用于指定合并后的对象存储桶和名称。
 	dst := minio.CopyDestOptions{
 		Bucket: bucketName,
 		Object: fileName,
 	}
+	// 创建一个CopySrcOptions实例，用于指定每个分块的存储桶和名称。
 	var srcs []minio.CopySrcOptions
+	// 循环创建CopySrcOptions实例，并添加到srcs切片中。
 	for i := 1; i <= totalChunks; i++ {
 		formatInt := strconv.FormatInt(int64(i), 10)
 		src := minio.CopySrcOptions{
 			Bucket: bucketName,
 			Object: fileName + "_" + formatInt,
 		}
+		// 添加CopySrcOptions实例到srcs切片中。
 		srcs = append(srcs, src)
 	}
+	// 调用Minio客户端的ComposeObject方法将分块合并成一个对象。
 	object, err := c.c.ComposeObject(
 		ctx,
 		dst,

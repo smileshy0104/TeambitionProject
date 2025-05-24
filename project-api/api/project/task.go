@@ -6,17 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"net/http"
-	"os"
 	"path"
 	"project-api/pkg/model"
 	"project-api/pkg/model/pro"
 	"project-api/pkg/model/tasks"
 	common "project-common"
 	"project-common/errs"
-	"project-common/fs"
 	"project-common/minio"
 	"project-common/tms"
 	"project-grpc/task"
+	"strconv"
 	"time"
 )
 
@@ -539,37 +538,73 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 	}
 	// 第二种 是分片上传
 	if req.TotalChunks > 1 {
+		// TODO 分片上传至本地目录文件
+		////分片上传 无非就是先把每次的存储起来 追加就可以了
+		//path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
+		//if !fs.IsExist(path) {
+		//	os.MkdirAll(path, os.ModePerm)
+		//}
+		//fileName := path + "/" + req.Identifier
+		//// 打开文件，如果文件不存在则创建文件。
+		//openFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+		//if err != nil {
+		//	c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+		//	return
+		//}
+		//// 打开上传的文件。
+		//open, err := uploadFile.Open()
+		//if err != nil {
+		//	c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+		//	return
+		//}
+		//defer open.Close()
+		//// 从上传的文件中读取数据并写入文件。
+		//buf := make([]byte, req.CurrentChunkSize)
+		//open.Read(buf)
+		//openFile.Write(buf)
+		//openFile.Close()
+		//key = fileName
+		//// 如果是最后一个分片，则重命名文件。
+		//if req.TotalChunks == req.ChunkNumber {
+		//	//最后一个分片了
+		//	newPath := path + "/" + req.Filename
+		//	key = newPath
+		//	os.Rename(fileName, newPath)
+		//}
+
+		// TODO 分片上传至minio
 		//分片上传 无非就是先把每次的存储起来 追加就可以了
-		path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
-		if !fs.IsExist(path) {
-			os.MkdirAll(path, os.ModePerm)
-		}
-		fileName := path + "/" + req.Identifier
-		// 打开文件，如果文件不存在则创建文件。
-		openFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
-		if err != nil {
-			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
-			return
-		}
-		// 打开上传的文件。
 		open, err := uploadFile.Open()
 		if err != nil {
 			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
 			return
 		}
 		defer open.Close()
-		// 从上传的文件中读取数据并写入文件。
 		buf := make([]byte, req.CurrentChunkSize)
+		// 读取文件内容并上传到 MinIO 服务器。
 		open.Read(buf)
-		openFile.Write(buf)
-		openFile.Close()
-		key = fileName
-		// 如果是最后一个分片，则重命名文件。
+		formatInt := strconv.FormatInt(int64(req.ChunkNumber), 10)
+		// 上传文件到 MinIO 服务器。
+		_, err = minioClient.Put(
+			context.Background(),
+			bucketName,
+			req.Filename+"_"+formatInt,
+			buf,
+			int64(req.CurrentChunkSize),
+			uploadFile.Header.Get("Content-Type"),
+		)
+		if err != nil {
+			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+			return
+		}
+		// 如果是最后一个分片，则合并分片。
 		if req.TotalChunks == req.ChunkNumber {
-			//最后一个分片了
-			newPath := path + "/" + req.Filename
-			key = newPath
-			os.Rename(fileName, newPath)
+			//最后一个分片了 合并
+			_, err := minioClient.Compose(context.Background(), bucketName, req.Filename, req.TotalChunks)
+			if err != nil {
+				c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+				return
+			}
 		}
 	}
 	//调用服务 存入file表
