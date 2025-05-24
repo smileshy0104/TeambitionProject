@@ -14,6 +14,7 @@ import (
 	common "project-common"
 	"project-common/errs"
 	"project-common/fs"
+	"project-common/minio"
 	"project-common/tms"
 	"project-grpc/task"
 	"time"
@@ -481,18 +482,56 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 	file := multipartForm.File
 	//假设只上传一个文件
 	uploadFile := file["file"][0]
-	key := ""
+	//key := ""
 	// 第一种 没有达成分片的条件    判断是否是单片上传
+	// TODO 上传文件到minio
+	key := "msproject/" + req.Filename
+	minioClient, err := minio.New(
+		"localhost:9009",
+		"XPk01wTsdntPtZmRPMe4",
+		"B0rProcvGvGOL68fWI9xY0E5GXn9K8q5iz61XPSI",
+		false)
+	if err != nil {
+		c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+		return
+	}
+	bucketName := "msproject"
 	if req.TotalChunks == 1 {
-		//不分片
-		path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
-		if !fs.IsExist(path) {
-			os.MkdirAll(path, os.ModePerm)
+		// TODO 上传本地目录文件
+		////不分片
+		//path := "upload/" + req.ProjectCode + "/" + req.TaskCode + "/" + tms.FormatYMD(time.Now())
+		//if !fs.IsExist(path) {
+		//	os.MkdirAll(path, os.ModePerm)
+		//}
+		//dst := path + "/" + req.Filename
+		//key = dst
+		//// 保存上传的文件到指定路径。
+		//err := c.SaveUploadedFile(uploadFile, dst)
+		//if err != nil {
+		//	c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+		//	return
+		//}
+
+		// TODO 上传到minio
+		// 打开文件，如果文件不存在则创建文件。
+		open, err := uploadFile.Open()
+		if err != nil {
+			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
+			return
 		}
-		dst := path + "/" + req.Filename
-		key = dst
-		// 保存上传的文件到指定路径。
-		err := c.SaveUploadedFile(uploadFile, dst)
+		defer open.Close()
+		// 读取文件内容并上传到 MinIO 服务器。
+		buf := make([]byte, req.CurrentChunkSize)
+		open.Read(buf)
+		// 上传文件到 MinIO 服务器。
+		_, err = minioClient.Put(
+			context.Background(),
+			bucketName,
+			req.Filename,
+			buf,
+			int64(req.TotalSize),
+			uploadFile.Header.Get("Content-Type"),
+		)
 		if err != nil {
 			c.JSON(http.StatusOK, result.Fail(-999, err.Error()))
 			return
@@ -537,7 +576,7 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// 创建一个任务文件请求消息对象，并设置相关参数。
-	fileUrl := "http://localhost/" + key
+	fileUrl := "http://localhost:9009/" + key
 	msg := &task.TaskFileReqMessage{
 		TaskCode:         req.TaskCode,
 		ProjectCode:      req.ProjectCode,
@@ -564,7 +603,7 @@ func (t *HandlerTask) uploadFiles(c *gin.Context) {
 		"file":        key,
 		"hash":        "",
 		"key":         key,
-		"url":         "http://localhost/" + key,
+		"url":         "http://localhost:9009/" + key,
 		"projectName": req.ProjectName,
 	}))
 }
