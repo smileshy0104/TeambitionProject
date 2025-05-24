@@ -2,13 +2,16 @@ package task_service_v1
 
 import (
 	"context"
+	"fmt"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"project-common/encrypts"
 	"project-common/errs"
+	"project-common/kafka"
 	"project-common/tms"
 	"project-grpc/task"
 	"project-grpc/user/login"
+	"project-project/config"
 	"project-project/internal/dao"
 	"project-project/internal/data"
 	"project-project/internal/database"
@@ -336,6 +339,10 @@ func (t *TaskService) SaveTask(ctx context.Context, msg *task.TaskReqMessage) (*
 
 // EditTask 修改任务信息，包括任务的基本信息、分配信息等。
 func (t *TaskService) EditTask(ctx context.Context, msg *task.TaskReqMessage) (*task.TaskMessage, error) {
+	fmt.Println("FindProjectIdByTaskId")
+	config.SendLog(kafka.Info("EditTask", "TaskService.EditTask", kafka.FieldMap{
+		"taskId": msg.TaskCode,
+	}))
 	//1. 检查业务逻辑
 	if msg.Name == "" {
 		return nil, errs.GrpcError(model.TaskNameNotNull)

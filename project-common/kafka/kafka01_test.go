@@ -9,7 +9,7 @@ import (
 func TestProducer01(t *testing.T) {
 	w := GetWriter("localhost:9092")
 	m := make(map[string]string)
-	m["projectCode"] = "1200"
+	m["projectCode"] = "1300"
 	bytes, _ := json.Marshal(m)
 	w.Send(LogData{
 		Topic: "msproject_log",
