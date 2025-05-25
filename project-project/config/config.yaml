@@ -28,7 +28,8 @@ mysql:
   port: 3309
   db: msproject
 db:
-  separation: true
+#  separation: true
+  separation: false
   master:
     name: master
     username: root
