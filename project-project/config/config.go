@@ -94,6 +94,7 @@ func InitConfig() *Config {
 	conf := &Config{viper: viper.New()}
 	//先从nacos读取配置，如果读取不到 在本地读取
 	nacosClient := InitNacosClient()
+	// 读取nacos配置
 	configYaml, err2 := nacosClient.confClient.GetConfig(vo.ConfigParam{
 		DataId: "config.yaml",
 		Group:  nacosClient.group,
@@ -101,13 +102,15 @@ func InitConfig() *Config {
 	if err2 != nil {
 		log.Fatalln(err2)
 	}
-	log.Println(configYaml)
+	// log.Println(configYaml)
+	// 监听配置文件变化并热加载
 	err2 = nacosClient.confClient.ListenConfig(vo.ConfigParam{
 		DataId: "config.yaml",
 		Group:  nacosClient.group,
+		// 监听nacos 配置文件变化
 		OnChange: func(namespace, group, dataId, data string) {
-			//
 			log.Printf("load nacos config changed %s \n", data)
+			// 重新读取配置
 			err := conf.viper.ReadConfig(bytes.NewBuffer([]byte(data)))
 			if err != nil {
 				log.Printf("load nacos config changed err : %s \n", err.Error())
@@ -119,6 +122,7 @@ func InitConfig() *Config {
 	if err2 != nil {
 		log.Fatalln(err2)
 	}
+	// 读取本地配置
 	conf.viper.SetConfigType("yaml")
 	if configYaml != "" {
 		err := conf.viper.ReadConfig(bytes.NewBuffer([]byte(configYaml)))
