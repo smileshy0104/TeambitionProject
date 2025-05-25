@@ -39,5 +39,4 @@ require (
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gorm.io/gorm v1.25.7 // indirect
-	gorm.io/plugin/dbresolver v1.5.2 // indirect
 )
