@@ -11,6 +11,8 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/minio/crc64nvme v1.0.1 // indirect
@@ -36,4 +38,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
+	gorm.io/gorm v1.25.7 // indirect
+	gorm.io/plugin/dbresolver v1.5.2 // indirect
 )

@@ -18,6 +18,7 @@ type Config struct {
 	GC          *GrpcConfig
 	EtcdConfig  *EtcdConfig
 	MysqlConfig *MysqlConfig
+	DbConfig    DbConfig
 	JwtConfig   *JwtConfig
 }
 
@@ -47,6 +48,13 @@ type MysqlConfig struct {
 	Host     string
 	Port     int
 	Db       string
+}
+
+// DbConfig 数据库配置
+type DbConfig struct {
+	Master     MysqlConfig
+	Slave      []MysqlConfig
+	Separation bool
 }
 
 // JwtConfig JWT配置
@@ -154,4 +162,27 @@ func (c *Config) InitJwtConfig() {
 		RefreshSecret: c.viper.GetString("jwt.refreshSecret"),
 	}
 	c.JwtConfig = mc
+}
+
+// InitDbConfig 初始化数据库配置（主从数据库）
+func (c *Config) InitDbConfig() {
+	mc := DbConfig{}
+	mc.Separation = c.viper.GetBool("db.separation")
+	// 从数据库
+	var slaves []MysqlConfig
+	err := c.viper.UnmarshalKey("db.slave", &slaves)
+	if err != nil {
+		panic(err)
+	}
+	// 主数据库
+	master := MysqlConfig{
+		Username: c.viper.GetString("db.master.username"),
+		Password: c.viper.GetString("db.master.password"),
+		Host:     c.viper.GetString("db.master.host"),
+		Port:     c.viper.GetInt("db.master.port"),
+		Db:       c.viper.GetString("db.master.db"),
+	}
+	mc.Master = master
+	mc.Slave = slaves
+	c.DbConfig = mc
 }
