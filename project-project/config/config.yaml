@@ -27,6 +27,28 @@ mysql:
   host: 127.0.0.1
   port: 3309
   db: msproject
+db:
+  separation: true
+  master:
+    name: master
+    username: root
+    password: root
+    host: 127.0.0.1
+    port: 3309
+    db: msproject
+  slave:
+    - username: root
+      password: root
+      host: 127.0.0.1
+      port: 3309
+      db: msproject_slave
+      name: slave
+    - username: root
+      password: root
+      host: 127.0.0.1
+      port: 3309
+      db: msproject_slave1
+      name: slave1
 jwt:
   accessExp: 7
   refreshExp: 14
