@@ -1,7 +1,9 @@
 package config
 
 import (
+	"bytes"
 	"github.com/go-redis/redis/v8"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -66,7 +68,7 @@ type JwtConfig struct {
 }
 
 // InitConfig 初始化配置
-func InitConfig() *Config {
+func InitConfigOld() *Config {
 	conf := &Config{viper: viper.New()}
 	workDir, _ := os.Getwd()
 	conf.viper.SetConfigName("config")
@@ -85,6 +87,69 @@ func InitConfig() *Config {
 	conf.InitJwtConfig()
 	conf.InitDbConfig()
 	return conf
+}
+
+// InitConfig 初始化配置
+func InitConfig() *Config {
+	conf := &Config{viper: viper.New()}
+	//先从nacos读取配置，如果读取不到 在本地读取
+	nacosClient := InitNacosClient()
+	configYaml, err2 := nacosClient.confClient.GetConfig(vo.ConfigParam{
+		DataId: "config.yaml",
+		Group:  nacosClient.group,
+	})
+	if err2 != nil {
+		log.Fatalln(err2)
+	}
+	log.Println(configYaml)
+	err2 = nacosClient.confClient.ListenConfig(vo.ConfigParam{
+		DataId: "config.yaml",
+		Group:  nacosClient.group,
+		OnChange: func(namespace, group, dataId, data string) {
+			//
+			log.Printf("load nacos config changed %s \n", data)
+			err := conf.viper.ReadConfig(bytes.NewBuffer([]byte(data)))
+			if err != nil {
+				log.Printf("load nacos config changed err : %s \n", err.Error())
+			}
+			//所有的配置应该重新读取
+			conf.ReLoadAllConfig()
+		},
+	})
+	if err2 != nil {
+		log.Fatalln(err2)
+	}
+	conf.viper.SetConfigType("yaml")
+	if configYaml != "" {
+		err := conf.viper.ReadConfig(bytes.NewBuffer([]byte(configYaml)))
+		if err != nil {
+			log.Fatalln(err)
+		}
+	} else {
+		workDir, _ := os.Getwd()
+		conf.viper.SetConfigName("config")
+		conf.viper.AddConfigPath(workDir + "/config")
+		err := conf.viper.ReadInConfig()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+	conf.ReLoadAllConfig()
+	return conf
+}
+
+func (c *Config) ReLoadAllConfig() {
+	c.ReadServerConfig()
+	c.InitZapLog()
+	c.ReadGrpcConfig()
+	c.ReadEtcdConfig()
+	c.InitMysqlConfig()
+	c.InitJwtConfig()
+	c.InitDbConfig()
+	//c.InitJaegerConfig()
+	////重新创建相关的客户端
+	//c.ReConnRedis()
+	//c.ReConnMysql()
 }
 
 // InitZapLog 初始化日志
