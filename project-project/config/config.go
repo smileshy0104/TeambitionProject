@@ -152,8 +152,8 @@ func (c *Config) ReLoadAllConfig() {
 	c.InitDbConfig()
 	//c.InitJaegerConfig()
 	////重新创建相关的客户端
-	//c.ReConnRedis()
-	//c.ReConnMysql()
+	c.ReConnRedis()
+	c.ReConnMysql()
 }
 
 // InitZapLog 初始化日志
