@@ -83,6 +83,7 @@ func InitConfig() *Config {
 	conf.ReadEtcdConfig()
 	conf.InitMysqlConfig()
 	conf.InitJwtConfig()
+	conf.InitDbConfig()
 	return conf
 }
 
