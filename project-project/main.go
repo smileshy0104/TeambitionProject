@@ -2,13 +2,24 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"log"
 	srv "project-common"
 	"project-project/config"
 	"project-project/router"
+	"project-project/tracing"
 )
 
 func main() {
 	r := gin.Default()
+	tp, tpErr := tracing.JaegerTraceProvider(config.C.JaegerConfig.Endpoints)
+	if tpErr != nil {
+		log.Fatal(tpErr)
+	}
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+
 	//路由
 	router.InitRouter(r)
 	//grpc服务注册
