@@ -4,18 +4,33 @@ import (
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"log"
 	"net/http"
 	_ "project-api/api"
 	"project-api/api/midd"
 	"project-api/config"
 	"project-api/router"
+	"project-api/tracing"
 	srv "project-common"
 	"time"
 )
 
 func main() {
 	r := gin.Default()
+	// Jaeger链路追踪
+	tp, tpErr := tracing.JaegerTraceProvider(config.C.JaegerConfig.Endpoints)
+	if tpErr != nil {
+		log.Fatal(tpErr)
+	}
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+
 	r.Use(midd.RequestLog())
+	// 链路追踪
+	r.Use(otelgin.Middleware("project-api"))
 	// 静态文件
 	r.StaticFS("/upload", http.Dir("upload"))
 	//路由

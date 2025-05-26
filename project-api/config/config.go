@@ -13,10 +13,16 @@ var C = InitConfig()
 
 // Config 是应用程序配置的结构体
 type Config struct {
-	viper      *viper.Viper
-	SC         *ServerConfig
-	GC         *GrpcConfig
-	EtcdConfig *EtcdConfig
+	viper        *viper.Viper
+	SC           *ServerConfig
+	GC           *GrpcConfig
+	EtcdConfig   *EtcdConfig
+	JaegerConfig *JaegerConfig
+}
+
+// JaegerConfig Jaeger配置的结构体
+type JaegerConfig struct {
+	Endpoints string
 }
 
 // ServerConfig 服务器配置的结构体
@@ -56,6 +62,7 @@ func InitConfig() *Config {
 	conf.ReadServerConfig()
 	conf.InitZapLog()
 	conf.ReadEtcdConfig()
+	conf.InitJaegerConfig()
 	return conf
 }
 
@@ -95,4 +102,12 @@ func (c *Config) ReadEtcdConfig() {
 	}
 	ec.Addrs = addrs
 	c.EtcdConfig = ec
+}
+
+// InitJaegerConfig 初始化Jaeger配置
+func (c *Config) InitJaegerConfig() {
+	mc := &JaegerConfig{
+		Endpoints: c.viper.GetString("jaeger.endpoints"),
+	}
+	c.JaegerConfig = mc
 }

@@ -11,3 +11,5 @@ zap:
 etcd:
   addrs:
     - "127.0.0.1:2379"
+jaeger:
+  endpoints: "http://localhost:14268/api/traces"
