@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/resolver"
 	"log"
@@ -61,7 +63,11 @@ func RegisterGrpc() *grpc.Server {
 		RegisterFunc: func(g *grpc.Server) {
 			login.RegisterLoginServiceServer(g, loginServiceV1.New())
 		}}
-	s := grpc.NewServer()
+	//s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+		otelgrpc.UnaryServerInterceptor(),
+		//interceptor.New().CacheInterceptor(),
+	)))
 	c.RegisterFunc(s)
 	lis, err := net.Listen("tcp", c.Addr)
 	if err != nil {

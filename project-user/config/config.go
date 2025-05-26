@@ -13,12 +13,18 @@ var C = InitConfig()
 
 // Config 是应用程序配置的结构体，包含viper实例和配置信息的子结构体
 type Config struct {
-	viper       *viper.Viper
-	SC          *ServerConfig
-	GC          *GrpcConfig
-	EtcdConfig  *EtcdConfig
-	MysqlConfig *MysqlConfig
-	JwtConfig   *JwtConfig
+	viper        *viper.Viper
+	SC           *ServerConfig
+	GC           *GrpcConfig
+	EtcdConfig   *EtcdConfig
+	MysqlConfig  *MysqlConfig
+	JwtConfig    *JwtConfig
+	JaegerConfig *JaegerConfig
+}
+
+// JaegerConfig Jaeger配置的结构体，包含Jaeger的端点地址
+type JaegerConfig struct {
+	Endpoints string
 }
 
 // ServerConfig 服务器配置的结构体，包含服务器的名称和地址
@@ -75,6 +81,7 @@ func InitConfig() *Config {
 	conf.ReadEtcdConfig()
 	conf.InitMysqlConfig()
 	conf.InitJwtConfig()
+	conf.InitJaegerConfig()
 	return conf
 }
 
@@ -154,4 +161,11 @@ func (c *Config) InitJwtConfig() {
 		RefreshSecret: c.viper.GetString("jwt.refreshSecret"),
 	}
 	c.JwtConfig = mc
+}
+
+func (c *Config) InitJaegerConfig() {
+	mc := &JaegerConfig{
+		Endpoints: c.viper.GetString("jaeger.endpoints"),
+	}
+	c.JaegerConfig = mc
 }

@@ -15,13 +15,19 @@ var C = InitConfig()
 
 // Config 是应用配置的结构体
 type Config struct {
-	viper       *viper.Viper
-	SC          *ServerConfig
-	GC          *GrpcConfig
-	EtcdConfig  *EtcdConfig
-	MysqlConfig *MysqlConfig
-	DbConfig    DbConfig
-	JwtConfig   *JwtConfig
+	viper        *viper.Viper
+	SC           *ServerConfig
+	GC           *GrpcConfig
+	EtcdConfig   *EtcdConfig
+	MysqlConfig  *MysqlConfig
+	DbConfig     DbConfig
+	JwtConfig    *JwtConfig
+	JaegerConfig *JaegerConfig
+}
+
+// JaegerConfig Jaeger配置
+type JaegerConfig struct {
+	Endpoints string
 }
 
 // ServerConfig 服务器配置
@@ -150,8 +156,8 @@ func (c *Config) ReLoadAllConfig() {
 	c.InitMysqlConfig()
 	c.InitJwtConfig()
 	c.InitDbConfig()
-	//c.InitJaegerConfig()
-	////重新创建相关的客户端
+	c.InitJaegerConfig()
+	//重新创建相关的客户端
 	c.ReConnRedis()
 	c.ReConnMysql()
 }
@@ -255,4 +261,12 @@ func (c *Config) InitDbConfig() {
 	mc.Master = master
 	mc.Slave = slaves
 	c.DbConfig = mc
+}
+
+// InitJaegerConfig 配置jaeger
+func (c *Config) InitJaegerConfig() {
+	mc := &JaegerConfig{
+		Endpoints: c.viper.GetString("jaeger.endpoints"),
+	}
+	c.JaegerConfig = mc
 }
