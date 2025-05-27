@@ -1,6 +1,13 @@
 package config
 
-import "project-common/kafka"
+import (
+	"context"
+	"go.uber.org/zap"
+	"project-common/kafka"
+	"project-project/internal/dao"
+	"project-project/internal/repo"
+	"time"
+)
 
 // 声明一个全局变量 kw，用于向 Kafka 发送消息
 var kw *kafka.KafkaWriter
@@ -32,4 +39,38 @@ func SendCache(data []byte) {
 		Topic: "msproject_cache",
 		Data:  data,
 	})
+}
+
+type KafkaCache struct {
+	R     *kafka.KafkaReader
+	cache repo.Cache
+}
+
+func (c *KafkaCache) DeleteCache() {
+	for {
+		message, err := c.R.R.ReadMessage(context.Background())
+		if err != nil {
+			zap.L().Error("DeleteCache ReadMessage err", zap.Error(err))
+			continue
+		}
+		zap.L().Info("收到缓存", zap.String("value", string(message.Value)))
+		if "task" == string(message.Value) {
+			fields, err := c.cache.HKeys(context.Background(), "task")
+			if err != nil {
+				zap.L().Error("DeleteCache HKeys err", zap.Error(err))
+				continue
+			}
+			time.Sleep(1 * time.Second)
+			c.cache.Delete(context.Background(), fields)
+		}
+	}
+
+}
+
+func NewCacheReader() *KafkaCache {
+	reader := kafka.GetReader([]string{"localhost:9092"}, "cache_group", "msproject_cache")
+	return &KafkaCache{
+		R:     reader,
+		cache: dao.Rc,
+	}
 }
