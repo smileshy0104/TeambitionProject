@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"project-common/encrypts"
+	"project-grpc/task"
 	"project-project/internal/dao"
 	"project-project/internal/repo"
 	"strings"
@@ -33,6 +34,7 @@ func New() *CacheInterceptor {
 	// 可以在此处添加更多的方法和对应的响应类型
 	// 例如：cacheMap["/project.service.v1.ProjectService/FindProjectByMemId"] = &project.MyProjectResponse{}
 	//cacheMap["/project.service.v1.ProjectService/FindProjectByMemId"] = &project.MyProjectResponse{}
+	cacheMap["/task.service.v1.TaskService/MyTaskList"] = &task.MyTaskListResponse{}
 	return &CacheInterceptor{cache: dao.Rc, cacheMap: cacheMap}
 }
 
